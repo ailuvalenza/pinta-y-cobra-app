@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123a5c">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pintá y Cobrá">
+<title>Pintá y Cobrá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  Pintá y Cobrá: app de presupuestos de pintura (Argentina).
+  Hecha el 23/11/2026. Sin IA ni servidor: todo se guarda en el celular del pintor (localStorage).
+  El PDF se arma en el celular con jsPDF. Los 3 bumps se activan con un código (ver CODIGOS).
+  ?demo=1 abre con un ejemplo cargado y no guarda nada (para el quiz y los anuncios).
+-->
+<style>
+:root{--azul:#123a5c;--azul2:#1d5a8c;--amarillo:#ffc928;--amarillo2:#e0a800;--verde:#1f9d55;--rojo:#d64545;--fondo:#f3f5f8;--tarjeta:#fff;--texto:#1c2530;--suave:#5b6776;--borde:#dde3ea}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--fondo);color:var(--texto);font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{padding-bottom:env(safe-area-inset-bottom)}
+#app{max-width:520px;margin:0 auto;min-height:100vh}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;background:var(--azul);color:#fff;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top))}
+.top h1{font-size:17px;font-weight:700;line-height:1.2}
+.top .logo{font-size:22px}
+.atras{background:rgba(255,255,255,.14);border:0;color:#fff;width:36px;height:36px;border-radius:10px;font-size:24px;line-height:1;cursor:pointer}
+main{padding:16px 14px 120px}
+h2{font-size:16px;font-weight:700;margin:22px 0 10px}
+h2:first-child{margin-top:4px}
+p{font-size:14.5px;line-height:1.5;margin-bottom:10px}
+small{color:var(--suave)}
+.hola{font-size:20px;font-weight:700;margin-bottom:12px}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:15px 16px;font:700 16px 'Poppins',sans-serif;color:var(--azul);background:var(--amarillo);box-shadow:0 4px 0 var(--amarillo2);cursor:pointer;text-align:center;text-decoration:none;margin:6px 0 10px}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--amarillo2)}
+.btn.azul{background:var(--azul);color:#fff;box-shadow:0 4px 0 #0a2540}
+.btn.verde{background:#25d366;color:#fff;box-shadow:0 4px 0 #128c4b}
+.btn.borde{background:#fff;color:var(--azul);border:2px solid var(--borde);box-shadow:none}
+.btn.chico{padding:10px 12px;font-size:14px;margin:0}
+.btn.rojo{background:#fff;color:var(--rojo);border:2px solid #f3cccc;box-shadow:none}
+.card{background:var(--tarjeta);border:1px solid var(--borde);border-radius:16px;padding:14px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 4px}
+.stats div{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:10px 12px}
+.stats b{display:block;font-size:17px}
+.stats small{font-size:12px}
+.pres{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px 14px;margin-bottom:8px;font:inherit;color:inherit;cursor:pointer}
+.pres b{display:block;font-size:15px}
+.pres small{font-size:12px}
+.pres .der{text-align:right;flex:none}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#eef1f5;color:var(--suave);margin-top:3px}
+.e-enviado{background:#e6f0fb;color:var(--azul2)}.e-aprobado{background:#e3f6ea;color:var(--verde)}.e-perdido{background:#fbe9e9;color:var(--rojo)}
+.vacio{color:var(--suave);background:#fff;border:1px dashed var(--borde);border-radius:14px;padding:16px;text-align:center}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.menu button{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px 10px;font:600 13.5px 'Poppins',sans-serif;color:var(--texto);cursor:pointer;text-align:center}
+.menu button span{display:block;font-size:24px;margin-bottom:4px}
+label.f{display:block;margin-bottom:10px}
+label.f>span{display:block;font-size:13px;font-weight:600;margin-bottom:4px;color:var(--suave)}
+input.i,textarea.i,select.i{width:100%;padding:12px;border-radius:12px;border:2px solid var(--borde);font:500 16px 'Poppins',sans-serif;color:var(--texto);background:#fff;outline:none}
+input.i:focus,textarea.i:focus{border-color:var(--azul2)}
+textarea.i{min-height:90px;resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.amb{background:#fff;border:1px solid var(--borde);border-left:5px solid var(--amarillo);border-radius:14px;padding:12px;margin-bottom:12px}
+.amb-top{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.amb-top input{flex:1;font-weight:700}
+.ib{flex:none;width:42px;height:42px;border-radius:10px;border:2px solid var(--borde);background:#fff;font-size:17px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chips button{border:1px solid var(--borde);background:var(--fondo);border-radius:99px;padding:5px 11px;font:500 12.5px 'Poppins',sans-serif;color:var(--texto);cursor:pointer}
+.seg{display:flex;background:var(--fondo);border-radius:12px;padding:3px;margin-bottom:10px;gap:3px}
+.seg button{flex:1;border:0;background:none;border-radius:10px;padding:9px 4px;font:600 12.5px 'Poppins',sans-serif;color:var(--suave);cursor:pointer;line-height:1.25}
+.seg button.on{background:#fff;color:var(--azul);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg-t{font-size:13px;font-weight:600;color:var(--suave);margin:2px 0 5px}
+.ck{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14.5px;cursor:pointer}
+.ck input{width:22px;height:22px;accent-color:var(--azul);flex:none}
+.vivo{background:#fff8dc;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:600;margin-top:6px}
+.dicta{background:#e6f0fb;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:8px}
+.pie{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#fff;border-top:1px solid var(--borde);padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+.pie-in{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.pie .tot{flex:none}
+.pie .tot small{display:block;font-size:11px}
+.pie .tot b{font-size:19px}
+.pie .btn{margin:0}
+.res-top{background:var(--azul);color:#fff;border-radius:18px;padding:16px;margin-bottom:12px}
+.res-top small{color:#c8d6e5}
+.res-top .grande{font-size:32px;font-weight:800;line-height:1.1;margin:4px 0}
+.m2s{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.m2s span{background:rgba(255,255,255,.14);border-radius:99px;padding:4px 10px;font-size:12px}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t td{padding:7px 0;border-bottom:1px dashed var(--borde);vertical-align:top}
+table.t td.n{text-align:right;white-space:nowrap;padding-left:8px}
+table.t td small{display:block;font-size:11.5px}
+table.t tr.tt td{border-bottom:0;font-weight:700;padding-top:9px}
+.acc{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tool{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:8px;font:inherit;color:inherit;cursor:pointer}
+.tool .em{font-size:26px;flex:none}
+.tool b{display:block;font-size:14.5px}
+.tool small{font-size:12.5px;line-height:1.35;display:block}
+.tool .lk{margin-left:auto;font-size:18px;flex:none}
+.aviso{background:#fff3f3;border:1px solid #f3cccc;border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0}
+.ok{background:#e9f8ef;border:1px solid #bfe8cf;border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0}
+.info{background:#fff8dc;border:1px solid #f4e3a1;border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0}
+.fila{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--borde);font-size:14px}
+.fila.big{font-size:17px;font-weight:800;border-bottom:0}
+.pr-row{display:grid;grid-template-columns:1fr 130px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--borde)}
+.pr-row span{font-size:13.5px;line-height:1.3}
+.pr-row small{display:block;font-size:11.5px}
+.pr-row input{padding:9px 10px;font-size:15px;text-align:right}
+.opc3{display:grid;gap:10px}
+.opc3 .card.rec{border:2px solid var(--amarillo)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--texto);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:90%;text-align:center}
+.sep{height:1px;background:var(--borde);margin:16px 0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script>
+(function(){
+'use strict';
+
+var KEY = 'pintaycobra:v1';
+var qs = new URLSearchParams(location.search);
+var DEMO = qs.get('demo') === '1';
+var DEMO_ID = null;
+
+/* ============ Precios de arranque ============
+   Referencia: iProfesional (PropData) nov/2026 y Mercado Libre; CABA y GBA.
+   El pintor los cambia por los suyos la primera vez. [id, grupo, nombre, unidad, precio] */
+var BASE = [
+  ['pared','mo','Pintura de paredes (2 manos)','m²',5500],
+  ['techo','mo','Cielorraso (2 manos)','m²',7000],
+  ['ext','mo','Frente o pared exterior (2 manos)','m²',8000],
+  ['manoExtra','mo','Mano extra (color fuerte o cambio de color)','m²',1800],
+  ['enduido','mo','Enduido y lijado','m²',4500],
+  ['fijador','mo','Fijador sellador','m²',900],
+  ['humedad','mo','Tratar humedad u hongos','m²',3500],
+  ['grieta','mo','Reparar grietas o fisuras','metro',4000],
+  ['puerta','mo','Puerta (2 caras + marco)','unidad',45000],
+  ['reja','mo','Rejas o portón (antióxido + 2 manos)','m²',9000],
+  ['muebles','mo','Mover y tapar muebles','ambiente',15000],
+  ['andamio','mo','Andamio o trabajo en altura','día',25000],
+  ['latInt20','mat','Látex interior 20 L','lata',110000],
+  ['latInt4','mat','Látex interior 4 L','lata',30000],
+  ['latTec20','mat','Látex para cielorraso 20 L','lata',95000],
+  ['latTec4','mat','Látex para cielorraso 4 L','lata',26000],
+  ['latExt20','mat','Látex exterior 20 L','lata',150000],
+  ['latExt4','mat','Látex exterior 4 L','lata',40000],
+  ['enduidoMat','mat','Enduido 20 L','balde',55000],
+  ['fijadorMat','mat','Fijador sellador 4 L','lata',28000],
+  ['esmalte','mat','Antióxido o esmalte sintético 1 L','lata',22000],
+  ['lija','mat','Lija','pliego',1200],
+  ['cinta','mat','Cinta de papel','rollo',4500],
+  ['nylon','mat','Nylon para cubrir','unidad',6000]
+];
+var P = {}, PR0 = {};
+BASE.forEach(function(b){ P[b[0]] = {g:b[1], n:b[2], u:b[3]}; PR0[b[0]] = b[4]; });
+
+var AJ0 = {
+  alto:2.5, descontar:false, puertaM2:1.8, ventanaM2:1.5,
+  rindeLatex:10, rindeExt:8, rindeEnduido:25, rindeFijador:40, rindeEsmalte:8, desperdicio:10,
+  validez:15, garantia:'6 meses sobre la mano de obra', jornal:60000
+};
+
+/* Códigos de los bumps (se guarda solo el SHA-256 de "pyc:" + código sin guiones) */
+var CODIGOS = {
+  lista:'ddcd5da9e210a0d8b224b3a25ae30ec9f1f873d4603b86756b5e5b77412c2aee',
+  sena:'f85ad735add6d63383890c5165f51c19c78efdba63f060f5cf1c9d12de44b478',
+  opc:'6068d4e596b08d138dd4a79f7888f34c94513230dab28d9e9ffd27c952e6d3a8'
+};
+var TOOLS = {
+  lista:{e:'🧾', t:'Lista de Material para el Cliente', d:'La lista exacta de latas, enduido y lijas para que el cliente compre sin que sobre ni falte.'},
+  sena:{e:'✍️', t:'Contrato y Seña', d:'Acuerdo de trabajo con la seña, el saldo y qué no está incluido, más el recibo de la seña.'},
+  opc:{e:'🎯', t:'Presupuesto en 3 Opciones', d:'Básica, Recomendada y Premium en un solo PDF: el cliente elige entre tus opciones y no entre vos y el más barato.'}
+};
+var ESTADOS = {borrador:'Borrador', enviado:'Enviado', aprobado:'Aprobado', perdido:'Perdido'};
+var NOMBRES_AMB = ['Living','Comedor','Dormitorio','Cocina','Baño','Pasillo','Frente','Patio'];
+
+/* ============ Estado ============ */
+function estadoNuevo(){
+  var pr = {}; for (var k in PR0) pr[k] = PR0[k];
+  return {v:1, listo:false, datos:{nombre:'', empresa:'', tel:'', zona:''}, precios:pr, aj:JSON.parse(JSON.stringify(AJ0)), pres:[], num:0, unlock:{}};
+}
+function cargar(){
+  try {
+    var s = JSON.parse(localStorage.getItem(KEY));
+    if (s && s.v) {
+      for (var k in PR0) if (!(k in s.precios)) s.precios[k] = PR0[k];
+      for (var j in AJ0) if (!(j in s.aj)) s.aj[j] = AJ0[j];
+      s.unlock = s.unlock || {}; s.pres = s.pres || []; s.datos = s.datos || {};
+      return s;
+    }
+  } catch (e) {}
+  return estadoNuevo();
+}
+var S = DEMO ? demoEstado() : cargar();
+function guardar(){
+  if (DEMO) return;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('No se pudo guardar en este celular'); }
+}
+
+/* ============ Ayudas ============ */
+function num(v){
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  v = String(v == null ? '' : v).replace(/[\s$]/g, '');
+  if (v.indexOf(',') > -1) v = v.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, '');
+  var n = parseFloat(v); return isFinite(n) ? n : 0;
+}
+function plata(n){ return '$ ' + Math.round(n).toLocaleString('es-AR'); }
+function dec(n){ return (Math.round(n * 10) / 10).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:1}); }
+function m2(n){ return dec(n) + ' m²'; }
+function miles(n){ return Math.round(n).toLocaleString('es-AR'); }
+function r100(n){ return Math.round(n / 100) * 100; }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function pad(n){ return ('000' + n).slice(-4); }
+function hoy(){ return new Date().toLocaleDateString('es-AR'); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function plural(n, u){
+  if (n === 1) return '1 ' + u;
+  var pl = {lata:'latas', balde:'baldes', rollo:'rollos', unidad:'unidades', pliego:'pliegos', metro:'metros', 'día':'días', ambiente:'ambientes'};
+  return miles(n) + ' ' + (pl[u] || u);
+}
+function cantTxt(c, u){ return u === 'm²' ? m2(c) : (u === 'metro' ? dec(c) + ' m' : plural(Math.round(c), u)); }
+function toast(t){
+  var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d);
+  setTimeout(function(){ d.remove(); }, 2800);
+}
+
+/* ============ Presupuesto ============ */
+function nuevoAmb(nombre){
+  return {id:uid(), nombre:nombre || 'Ambiente', modo:'med', largo:'', ancho:'', alto:String(S.aj.alto).replace('.', ','),
+    m2p:'', m2t:'', puertas:'1', ventanas:'1', paredes:true, techo:true, ext:false, manos:2, enduido:'no', fijador:false, humedad:''};
+}
+function nuevoPres(){
+  S.num = (S.num || 0) + 1;
+  return {id:uid(), num:S.num, ts:Date.now(), fecha:hoy(), cliente:{nombre:'', tel:'', dir:''}, amb:[nuevoAmb('Living')],
+    ex:{grieta:'', puerta:'', reja:'', muebles:'', andamio:'', otros:[]}, conMat:true, ajuste:'', notas:'', estado:'borrador',
+    queda:{dias:'', ayDias:'', ayJornal:'', viajes:'', viaje:'', herr:'', otros:''},
+    sena:{pct:'50', inicio:'', plazo:'', forma:'Efectivo o transferencia'}};
+}
+
+/* Calcula todo. opt (para 3 opciones): {enduido, manos, fm (factor del látex), sinFijador} */
+function calc(p, opt){
+  opt = opt || {};
+  var pr = S.precios, aj = S.aj, fm = opt.fm || 1, aju = 1 + num(p.ajuste) / 100;
+  var A = {parInt:0, parExt:0, techo:0, extra:0, end:0, fij:0, hum:0, lInt:0, lTec:0, lExt:0, nInt:0, n:0};
+  var det = [];
+  p.amb.forEach(function(a){
+    var par = 0, tec = 0;
+    if (a.modo === 'm2') { par = num(a.m2p); tec = num(a.m2t); }
+    else {
+      var L = num(a.largo), W = num(a.ancho), H = num(a.alto) || aj.alto;
+      par = 2 * (L + W) * H;
+      if (aj.descontar) par -= num(a.puertas) * aj.puertaM2 + num(a.ventanas) * aj.ventanaM2;
+      tec = L * W;
+    }
+    par = Math.max(0, par); if (!a.paredes) par = 0; if (!a.techo || a.ext) tec = 0;
+    var manos = opt.manos || a.manos || 2;
+    var end = opt.enduido || a.enduido;
+    var fij = opt.sinFijador ? false : a.fijador;
+    if (par + tec <= 0) { det.push({nombre:a.nombre, par:0, tec:0, manos:manos, end:end, fij:fij, hum:0, ext:a.ext}); return; }
+    A.n++;
+    if (a.ext) { A.parExt += par; A.lExt += par * manos / aj.rindeExt; }
+    else { A.parInt += par; A.lInt += par * manos / aj.rindeLatex; A.nInt++; }
+    A.techo += tec; A.lTec += tec * manos / aj.rindeLatex;
+    if (manos > 2) A.extra += (par + tec) * (manos - 2);
+    A.end += end === 'total' ? par : end === 'parcial' ? par * 0.3 : 0;
+    if (fij) A.fij += par + tec;
+    var hum = Math.min(num(a.humedad), par + tec); A.hum += hum;
+    det.push({nombre:a.nombre, par:par, tec:tec, manos:manos, end:end, fij:fij, hum:hum, ext:a.ext});
+  });
+
+  var mo = [], mat = [];
+  function lmo(id, cant, txt){ if (cant > 0.0001) { var pu = pr[id] * aju; mo.push({txt:txt || P[id].n, cant:cant, u:P[id].u, pu:pu, tot:r100(cant * pu)}); } }
+  lmo('pared', A.parInt, 'Pintura de paredes (2 manos)');
+  lmo('techo', A.techo, 'Pintura de cielorraso (2 manos)');
+  lmo('ext', A.parExt, 'Frente o paredes exteriores (2 manos)');
+  lmo('manoExtra', A.extra, 'Mano extra');
+  lmo('enduido', A.end);
+  lmo('fijador', A.fij);
+  lmo('humedad', A.hum);
+  lmo('grieta', num(p.ex.grieta));
+  lmo('puerta', num(p.ex.puerta));
+  lmo('reja', num(p.ex.reja));
+  lmo('muebles', num(p.ex.muebles));
+  lmo('andamio', num(p.ex.andamio));
+  (p.ex.otros || []).forEach(function(o){ var m = num(o.monto); if (m > 0) mo.push({txt:o.txt || 'Otro trabajo', cant:1, u:'', pu:m, tot:m}); });
+
+  function lm(id, n, f){ if (n > 0) { var pu = pr[id] * (f || 1); mat.push({txt:P[id].n, cant:n, u:P[id].u, pu:pu, tot:r100(n * pu)}); } }
+  var d = 1 + aj.desperdicio / 100;
+  function latas(litros, id20, id4){
+    litros *= d; if (litros < 0.05) return;
+    var n20 = Math.floor(litros / 20), r = litros - n20 * 20, n4 = 0;
+    if (r > 12) n20++; else if (r > 0.05) n4 = Math.ceil(r / 4);
+    lm(id20, n20, fm); lm(id4, n4, fm);
+  }
+  latas(A.lInt, 'latInt20', 'latInt4');
+  latas(A.lTec, 'latTec20', 'latTec4');
+  latas(A.lExt, 'latExt20', 'latExt4');
+  if (A.end > 0) lm('enduidoMat', Math.ceil(A.end * d / aj.rindeEnduido));
+  if (A.fij > 0) lm('fijadorMat', Math.ceil(A.fij * d / aj.rindeFijador));
+  var esm = num(p.ex.reja) / aj.rindeEsmalte + num(p.ex.puerta) * 0.5;
+  if (esm > 0) lm('esmalte', Math.ceil(esm));
+  var pint = A.parInt + A.parExt + A.techo;
+  if (pint > 0) {
+    lm('lija', Math.ceil(A.end / 5 + pint / 30));
+    lm('cinta', Math.max(1, A.n));
+    if (A.nInt) lm('nylon', A.nInt);
+  }
+  var totMO = mo.reduce(function(s, x){ return s + x.tot; }, 0);
+  var totMat = mat.reduce(function(s, x){ return s + x.tot; }, 0);
+  return {A:A, det:det, mo:mo, mat:mat, totMO:totMO, totMat:totMat, total:totMO + (p.conMat ? totMat : 0)};
+}
+
+var OPC = [
+  {k:'basica', t:'Básica', d:'Pintura en 2 manos sobre la pared como está, con látex de línea económica.', o:{enduido:'no', manos:2, fm:0.75, sinFijador:true}},
+  {k:'rec', t:'Recomendada', d:'Lo que necesita tu pared, tal cual lo medimos: preparación y pintura.', o:{}},
+  {k:'prem', t:'Premium', d:'Enduido completo, 3 manos y látex de primera línea: terminación lisa y más duradera.', o:{enduido:'total', manos:3, fm:1.4}}
+];
+
+function detTxt(x){
+  var t = [];
+  if (x.par) t.push((x.ext ? 'exterior ' : 'paredes ') + m2(x.par));
+  if (x.tec) t.push('cielorraso ' + m2(x.tec));
+  if (!t.length) return 'sin medidas';
+  t.push(x.manos + ' manos');
+  if (x.end === 'parcial') t.push('enduido en detalles');
+  if (x.end === 'total') t.push('enduido completo');
+  if (x.fij) t.push('fijador');
+  if (x.hum) t.push('humedad ' + m2(x.hum));
+  return t.join(' · ');
+}
+
+/* ============ Vistas ============ */
+var app = document.getElementById('app');
+var V = {v:'inicio', id:null};
+var vivoFn = null;
+function pres(){ for (var i = 0; i < S.pres.length; i++) if (S.pres[i].id === V.id) return S.pres[i]; return null; }
+function go(v, id){ V.v = v; if (id !== undefined) V.id = id; render(); window.scrollTo(0, 0); }
+function rerender(){ var y = window.scrollY; render(); window.scrollTo(0, y); }
+
+function render(){
+  var f = VIEWS[V.v] || VIEWS.inicio;
+  var o = f();
+  vivoFn = o.vivo || null;
+  app.innerHTML =
+    '<header class="top">' + (o.back ? '<button class="atras" data-go="' + o.back + '" aria-label="Volver">‹</button>' : '<span class="logo">🖌️</span>') +
+    '<h1>' + o.t + '</h1></header><main>' + o.b + '</main>' +
+    (o.f ? '<footer class="pie"><div class="pie-in">' + o.f + '</div></footer>' : '');
+  if (vivoFn) vivoFn();
+}
+
+function campo(label, b, val, extra){
+  return '<label class="f"><span>' + label + '</span><input class="i" data-b="' + b + '" value="' + esc(val) + '" ' + (extra || '') + '></label>';
+}
+function check(label, b, val){
+  return '<label class="ck"><input type="checkbox" data-b="' + b + '"' + (val ? ' checked' : '') + '><span>' + label + '</span></label>';
+}
+function seg(b, actual, ops, entero){
+  return '<div class="seg">' + ops.map(function(o){
+    return '<button type="button" class="' + (String(actual) === String(o[0]) ? 'on' : '') + '" data-act="seg" data-b="' + b + '" data-v="' + o[0] + '"' + (entero ? ' data-int' : '') + '>' + o[1] + '</button>';
+  }).join('') + '</div>';
+}
+var DEC = 'inputmode="decimal" autocomplete="off"';
+
+var VIEWS = {
+  inicio: function(){
+    if (!S.listo) return VIEWS.datos();
+    var lista = S.pres.slice().sort(function(a, b){ return b.ts - a.ts; });
+    var d = new Date(), mesT = 0, apN = 0, apT = 0;
+    S.pres.forEach(function(p){
+      var f = new Date(p.ts);
+      if (f.getMonth() === d.getMonth() && f.getFullYear() === d.getFullYear()) {
+        var t = calc(p).total; mesT += t; if (p.estado === 'aprobado') { apN++; apT += t; }
+      }
+    });
+    var b = '<div class="hola">Hola' + (S.datos.nombre ? ', ' + esc(S.datos.nombre.split(' ')[0]) : '') + ' 👋</div>' +
+      '<button class="btn" data-act="nuevo">+ Nuevo presupuesto</button>' +
+      (S.pres.length ? '<div class="stats"><div><small>Presupuestado este mes</small><b>' + plata(mesT) + '</b></div><div><small>Aprobados este mes</small><b>' + apN + ' · ' + plata(apT) + '</b></div></div>' : '') +
+      '<h2>Tus presupuestos</h2>' +
+      (lista.length ? lista.map(function(p){
+        return '<button class="pres" data-go="ver" data-id="' + p.id + '"><div><b>' + esc(p.cliente.nombre || 'Sin nombre') + '</b><small>N.º ' + pad(p.num) + ' · ' + esc(p.fecha) + '</small></div>' +
+          '<div class="der"><b>' + plata(calc(p).total) + '</b><span class="chip e-' + p.estado + '">' + ESTADOS[p.estado] + '</span></div></button>';
+      }).join('') : '<p class="vacio">Todavía no hiciste ninguno.<br>Tocá <b>«Nuevo presupuesto»</b> y en 2 minutos lo tenés.</p>') +
+      '<h2>Más</h2><div class="menu">' +
+      '<button data-go="precios"><span>💲</span>Mis precios</button>' +
+      '<button data-go="datos"><span>👤</span>Mis datos</button>' +
+      '<button data-go="extras"><span>🧰</span>Herramientas extra</button>' +
+      '<button data-go="copia"><span>💾</span>Copia de seguridad</button>' +
+      '<button data-go="ayuda"><span>📲</span>Ponerla en el celular</button>' +
+      '<button data-go="como"><span>❓</span>Cómo se usa</button>' +
+      '</div>';
+    return {t:'Pintá y Cobrá', b:b};
+  },
+
+  datos: function(){
+    var prim = !S.listo;
+    var b = (prim ? '<div class="hola">¡Bienvenido! 🖌️</div><p>Antes del primer presupuesto, cargá tus datos. Salen arriba de cada PDF que le mandás al cliente.</p>' : '') +
+      campo('Tu nombre', 'S.datos.nombre', S.datos.nombre, 'autocomplete="name" placeholder="Ej.: Carlos Gómez"') +
+      campo('Nombre de tu trabajo (opcional)', 'S.datos.empresa', S.datos.empresa, 'placeholder="Ej.: Pinturas Gómez"') +
+      campo('Tu WhatsApp', 'S.datos.tel', S.datos.tel, 'inputmode="tel" autocomplete="tel" placeholder="Ej.: 11 2345-6789"') +
+      campo('Zona donde trabajás', 'S.datos.zona', S.datos.zona, 'placeholder="Ej.: Zona oeste, GBA"') +
+      campo('Validez del presupuesto (días)', 'S.aj.validez', S.aj.validez, 'inputmode="numeric" data-num') +
+      campo('Garantía que das', 'S.aj.garantia', S.aj.garantia, '');
+    return {t:prim ? 'Tus datos' : 'Mis datos', back:prim ? '' : 'inicio', b:b,
+      f:prim ? '<button class="btn" data-go="precios">Siguiente: mis precios →</button>' : ''};
+  },
+
+  precios: function(){
+    var prim = !S.listo;
+    function filas(g){
+      return BASE.filter(function(x){ return x[1] === g; }).map(function(x){
+        return '<div class="pr-row"><span>' + x[2] + '<small>por ' + x[3] + '</small></span><input class="i" data-b="S.precios.' + x[0] + '" data-num value="' + miles(S.precios[x[0]]) + '" ' + DEC + '></div>';
+      }).join('');
+    }
+    var aj = S.aj;
+    var b = '<div class="info">Son <b>precios de arranque</b> (noviembre 2026, referencia CABA y GBA). <b>Cambialos por los tuyos</b>: todos tus presupuestos salen con tu precio.</div>' +
+      '<div class="card"><b>Subir todos los precios de una</b><p style="margin:4px 0 8px;font-size:13px">Para cuando aumenta la pintura o la inflación te come el precio.</p>' +
+      '<div class="g2"><input class="i" id="pct" ' + DEC + ' placeholder="Ej.: 10 (%)"><button class="btn azul chico" data-act="subir">Subir %</button></div></div>' +
+      '<h2>Mano de obra</h2>' + filas('mo') +
+      '<h2>Materiales</h2>' + filas('mat') +
+      '<h2>Cómo calcula</h2>' +
+      campo('Alto de pared de siempre (m)', 'S.aj.alto', String(aj.alto).replace('.', ','), DEC + ' data-num') +
+      check('Descontar puertas y ventanas de la pared', 'S.aj.descontar', aj.descontar) +
+      '<p style="font-size:12.5px;color:var(--suave)">Muchos pintores no las descuentan: recortar alrededor lleva más tiempo que pintar ese pedazo.</p>' +
+      '<div class="g2">' +
+      campo('Látex: m² por litro (1 mano)', 'S.aj.rindeLatex', aj.rindeLatex, DEC + ' data-num') +
+      campo('Látex exterior: m² por litro', 'S.aj.rindeExt', aj.rindeExt, DEC + ' data-num') +
+      campo('Enduido: m² por balde', 'S.aj.rindeEnduido', aj.rindeEnduido, DEC + ' data-num') +
+      campo('Fijador: m² por lata', 'S.aj.rindeFijador', aj.rindeFijador, DEC + ' data-num') +
+      campo('Esmalte: m² por litro', 'S.aj.rindeEsmalte', aj.rindeEsmalte, DEC + ' data-num') +
+      campo('Margen de material (%)', 'S.aj.desperdicio', aj.desperdicio, DEC + ' data-num') +
+      '</div>' +
+      campo('Tu jornal: lo mínimo que querés ganar por día', 'S.aj.jornal', miles(aj.jornal), DEC + ' data-num');
+    return {t:'Mis precios', back:prim ? 'datos' : 'inicio', b:b,
+      f:prim ? '<button class="btn" data-act="listo">Listo, empezar →</button>' : ''};
+  },
+
+  editar: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    var b = '<h2>Cliente</h2>' +
+      campo('Nombre', 'P.cliente.nombre', p.cliente.nombre, 'placeholder="Ej.: Marta"') +
+      '<div class="g2">' + campo('WhatsApp', 'P.cliente.tel', p.cliente.tel, 'inputmode="tel" placeholder="11 2345-6789"') +
+      campo('Dirección o barrio', 'P.cliente.dir', p.cliente.dir, '') + '</div>' +
+      '<h2>Ambientes</h2>' +
+      p.amb.map(function(a, i){
+        var pb = 'P.amb.' + i + '.';
+        return '<div class="amb"><div class="amb-top"><input class="i amb-n" data-b="' + pb + 'nombre" value="' + esc(a.nombre) + '">' +
+          '<button class="ib" data-act="dupAmb" data-i="' + i + '" aria-label="Duplicar">⧉</button><button class="ib" data-act="delAmb" data-i="' + i + '" aria-label="Borrar">🗑</button></div>' +
+          '<div class="chips">' + NOMBRES_AMB.map(function(n){ return '<button type="button" data-act="nomAmb" data-i="' + i + '" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' +
+          seg(pb + 'modo', a.modo, [['med', 'Tengo las medidas'], ['m2', 'Ya sé los m²']]) +
+          (a.modo === 'm2'
+            ? '<div class="g2">' + campo(a.ext ? 'm² de pared exterior' : 'm² de paredes', pb + 'm2p', a.m2p, DEC) + (a.ext ? '' : campo('m² de cielorraso', pb + 'm2t', a.m2t, DEC)) + '</div>'
+            : '<div class="g3">' + campo('Largo (m)', pb + 'largo', a.largo, DEC + ' placeholder="3"') + campo('Ancho (m)', pb + 'ancho', a.ancho, DEC + ' placeholder="3"') + campo('Alto (m)', pb + 'alto', a.alto, DEC) + '</div>' +
+              (S.aj.descontar ? '<div class="g2">' + campo('Puertas', pb + 'puertas', a.puertas, 'inputmode="numeric"') + campo('Ventanas', pb + 'ventanas', a.ventanas, 'inputmode="numeric"') + '</div>' : '')) +
+          check('Paredes', pb + 'paredes', a.paredes) +
+          (a.ext ? '' : check('Cielorraso', pb + 'techo', a.techo)) +
+          check('Es exterior (frente, patio, medianera)', pb + 'ext', a.ext) +
+          '<p class="seg-t">Manos</p>' + seg(pb + 'manos', a.manos, [[2, '2 manos'], [3, '3 manos<br><small>color fuerte</small>']], true) +
+          '<p class="seg-t">Estado de la pared</p>' + seg(pb + 'enduido', a.enduido, [['no', 'Sana'], ['parcial', 'Con detalles<br><small>enduido parcial</small>'], ['total', 'Enduido<br><small>completo</small>']]) +
+          check('Fijador sellador (pared nueva, manchas o polvo)', pb + 'fijador', a.fijador) +
+          campo('m² con humedad u hongos (si hay)', pb + 'humedad', a.humedad, DEC + ' placeholder="0"') +
+          '<div class="vivo" id="va-' + i + '"></div></div>';
+      }).join('') +
+      '<button class="btn borde" data-act="addAmb">+ Agregar ambiente</button>' +
+      '<h2>Extras</h2><div class="g2">' +
+      campo('Grietas a reparar (metros)', 'P.ex.grieta', p.ex.grieta, DEC + ' placeholder="0"') +
+      campo('Puertas a pintar', 'P.ex.puerta', p.ex.puerta, 'inputmode="numeric" placeholder="0"') +
+      campo('Rejas o portón (m²)', 'P.ex.reja', p.ex.reja, DEC + ' placeholder="0"') +
+      campo('Ambientes con muebles', 'P.ex.muebles', p.ex.muebles, 'inputmode="numeric" placeholder="0"') +
+      campo('Días de andamio o altura', 'P.ex.andamio', p.ex.andamio, 'inputmode="numeric" placeholder="0"') +
+      '</div>' +
+      (p.ex.otros || []).map(function(o, i){
+        return '<div class="g2" style="grid-template-columns:1fr 110px 42px;align-items:end">' + campo('Otro trabajo', 'P.ex.otros.' + i + '.txt', o.txt, 'placeholder="Ej.: lavar el frente"') +
+          campo('Precio', 'P.ex.otros.' + i + '.monto', o.monto, DEC) + '<button class="ib" style="margin-bottom:10px" data-act="delOtro" data-i="' + i + '">🗑</button></div>';
+      }).join('') +
+      '<button class="btn borde" data-act="addOtro">+ Otro trabajo con su precio</button>' +
+      '<h2>Material y precio</h2>' +
+      check('Incluir los materiales en el presupuesto', 'P.conMat', p.conMat) +
+      '<p style="font-size:12.5px;color:var(--suave);margin-top:-4px">Si el cliente compra la pintura, destildalo: el presupuesto sale solo con la mano de obra.</p>' +
+      campo('Ajuste solo para este presupuesto (%)', 'P.ajuste', p.ajuste, DEC + ' placeholder="0 (ej.: 10 si es lejos o urgente)"') +
+      '<h2>Notas</h2><div class="dicta">🎤 <b>¿No querés escribir?</b> Tocá el micrófono del teclado del celular y contalo hablando.</div>' +
+      '<label class="f"><textarea class="i" data-b="P.notas" placeholder="Ej.: la pared del baño tiene humedad de la medianera; el cliente quiere blanco tiza.">' + esc(p.notas) + '</textarea></label>';
+    return {t:'Presupuesto N.º ' + pad(p.num), back:'inicio', b:b,
+      f:'<div class="tot"><small>Total</small><b id="vt">$ 0</b></div><button class="btn" data-go="ver">Ver presupuesto →</button>',
+      vivo:function(){
+        var r = calc(p);
+        var t = document.getElementById('vt'); if (t) t.textContent = plata(r.total);
+        r.det.forEach(function(x, i){
+          var el = document.getElementById('va-' + i); if (!el) return;
+          var piso = p.amb[i].modo === 'med' ? num(p.amb[i].largo) * num(p.amb[i].ancho) : 0;
+          el.textContent = (x.par + x.tec > 0 ? '📐 Para pintar: ' + m2(x.par + x.tec) + (piso && !x.ext ? ' (el piso tiene ' + m2(piso) + ')' : '') : '📐 Cargá las medidas');
+        });
+      }};
+  },
+
+  ver: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    var r = calc(p), A = r.A;
+    var b = '<div class="res-top"><small>' + esc(p.cliente.nombre || 'Sin nombre') + ' · N.º ' + pad(p.num) + ' · ' + esc(p.fecha) + '</small>' +
+      '<div class="grande">' + plata(r.total) + '</div><small>' + (p.conMat ? 'Mano de obra + materiales' : 'Solo mano de obra (el material lo compra el cliente)') + '</small>' +
+      '<div class="m2s">' + (A.parInt ? '<span>Paredes ' + m2(A.parInt) + '</span>' : '') + (A.techo ? '<span>Cielorraso ' + m2(A.techo) + '</span>' : '') + (A.parExt ? '<span>Exterior ' + m2(A.parExt) + '</span>' : '') + '</div></div>' +
+      (r.total <= 0 ? '<div class="aviso">Todavía no hay medidas. Tocá <b>Editar</b> y cargá los ambientes.</div>' : '') +
+      '<button class="btn verde" data-act="pdf" data-k="pres">📄 Mandar PDF por WhatsApp</button>' +
+      '<div class="acc"><button class="btn borde chico" data-act="wa">💬 Mandar en texto</button><button class="btn borde chico" data-go="editar">✏️ Editar</button></div>' +
+      '<button class="btn azul" data-go="queda" style="margin-top:10px">💰 ¿Cuánto me queda de verdad?</button>' +
+      '<p class="seg-t" style="margin-top:8px">Estado</p>' + seg('P.estado', p.estado, [['borrador', 'Borrador'], ['enviado', 'Enviado'], ['aprobado', 'Aprobado'], ['perdido', 'Perdido']]) +
+      '<div class="card"><b>Ambientes</b>' + r.det.map(function(x){ return '<div class="fila"><span><b>' + esc(x.nombre) + '</b><br><small>' + detTxt(x) + '</small></span></div>'; }).join('') + '</div>' +
+      '<div class="card"><b>Mano de obra</b><table class="t">' + r.mo.map(function(x){
+        return '<tr><td>' + esc(x.txt) + '<small>' + (x.u ? cantTxt(x.cant, x.u) + ' × ' + plata(x.pu) : '') + '</small></td><td class="n">' + plata(x.tot) + '</td></tr>';
+      }).join('') + '<tr class="tt"><td>Total mano de obra</td><td class="n">' + plata(r.totMO) + '</td></tr></table></div>' +
+      '<div class="card"><b>Materiales</b>' + (p.conMat ? '' : '<p style="font-size:13px;margin:4px 0 0">No van en el total: los compra el cliente.</p>') +
+      '<table class="t">' + r.mat.map(function(x){
+        return '<tr><td>' + esc(x.txt) + '<small>' + plural(x.cant, x.u) + '</small></td><td class="n">' + plata(x.tot) + '</td></tr>';
+      }).join('') + '<tr class="tt"><td>Total materiales</td><td class="n">' + plata(r.totMat) + '</td></tr></table></div>' +
+      '<h2>Herramientas extra</h2>' +
+      ['lista', 'sena', 'opc'].map(function(k){
+        var T = TOOLS[k], on = S.unlock[k];
+        return '<button class="tool" data-act="tool" data-k="' + k + '"><span class="em">' + T.e + '</span><span><b>' + T.t + '</b><small>' + T.d + '</small></span><span class="lk">' + (on ? '›' : '🔒') + '</span></button>';
+      }).join('') +
+      '<div class="sep"></div><div class="acc"><button class="btn borde chico" data-act="dup">⧉ Duplicar</button><button class="btn rojo chico" data-act="del">🗑 Borrar</button></div>';
+    return {t:'Presupuesto N.º ' + pad(p.num), back:'inicio', b:b};
+  },
+
+  queda: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    var q = p.queda, qb = 'P.queda.';
+    var b = '<p>De lo que cobrás de <b>mano de obra</b>, ¿cuánto te queda limpio después de pagar el ayudante, los viajes y las herramientas?</p>' +
+      '<div class="g2">' +
+      campo('Días que te lleva', qb + 'dias', q.dias, DEC + ' placeholder="Ej.: 4"') +
+      campo('Días del ayudante', qb + 'ayDias', q.ayDias, DEC + ' placeholder="0"') +
+      campo('Jornal del ayudante', qb + 'ayJornal', q.ayJornal, DEC + ' placeholder="Ej.: 40.000"') +
+      campo('Viajes (idas y vueltas)', qb + 'viajes', q.viajes, DEC + ' placeholder="Ej.: 4"') +
+      campo('Costo de cada viaje', qb + 'viaje', q.viaje, DEC + ' placeholder="Nafta, colectivo"') +
+      campo('Rodillos, pinceles, desgaste', qb + 'herr', q.herr, DEC + ' placeholder="Ej.: 15.000"') +
+      '</div>' + campo('Otros gastos', qb + 'otros', q.otros, DEC + ' placeholder="0"') +
+      '<div class="card" id="vq"></div>';
+    return {t:'¿Cuánto me queda?', back:'ver', b:b, vivo:function(){
+      var el = document.getElementById('vq'); if (!el) return;
+      var r = calc(p), ay = num(q.ayDias) * num(q.ayJornal), vi = num(q.viajes) * num(q.viaje), he = num(q.herr), ot = num(q.otros);
+      var queda = r.totMO - ay - vi - he - ot, dias = num(q.dias);
+      var h = '<div class="fila"><span>Cobrás de mano de obra</span><b>' + plata(r.totMO) + '</b></div>' +
+        (ay ? '<div class="fila"><span>− Ayudante</span><span>' + plata(ay) + '</span></div>' : '') +
+        (vi ? '<div class="fila"><span>− Viajes</span><span>' + plata(vi) + '</span></div>' : '') +
+        (he ? '<div class="fila"><span>− Herramientas</span><span>' + plata(he) + '</span></div>' : '') +
+        (ot ? '<div class="fila"><span>− Otros</span><span>' + plata(ot) + '</span></div>' : '') +
+        '<div class="fila big"><span>Te queda</span><span>' + plata(queda) + '</span></div>';
+      if (dias > 0) {
+        var pd = queda / dias, jor = S.aj.jornal;
+        h += '<div class="fila"><span>Por día de trabajo</span><b>' + plata(pd) + '</b></div>';
+        if (jor > 0 && pd < jor) {
+          var falta = jor * dias - queda, pct = r.totMO > 0 ? Math.ceil(falta / r.totMO * 100) : 0;
+          h += '<div class="aviso">⚠️ Estás cobrando <b>menos que tu jornal</b> (' + plata(jor) + ' por día). Para llegar, a la mano de obra le faltan <b>' + plata(falta) + '</b> (+' + pct + ' %).</div>' +
+            (pct > 0 ? '<button class="btn" data-act="ajustar" data-v="' + pct + '">Subir este presupuesto ' + pct + ' %</button>' : '');
+        } else if (jor > 0) {
+          h += '<div class="ok">✅ Te queda más que tu jornal de ' + plata(jor) + ' por día.</div>';
+        }
+      }
+      el.innerHTML = h;
+    }};
+  },
+
+  extras: function(){
+    var b = '<p>Estas herramientas se usan desde cada presupuesto. Si compraste alguna, ingresá el código que te llegó por correo.</p>' +
+      ['lista', 'sena', 'opc'].map(function(k){
+        var T = TOOLS[k];
+        return '<div class="tool" style="cursor:default"><span class="em">' + T.e + '</span><span><b>' + T.t + '</b><small>' + T.d + '</small></span><span class="lk">' + (S.unlock[k] ? '✅' : '🔒') + '</span></div>';
+      }).join('') +
+      '<h2>Tengo un código</h2><div class="g2" style="grid-template-columns:1fr 110px"><input class="i" id="cod" placeholder="PYC-XXXX-0000" autocapitalize="characters"><button class="btn azul chico" data-act="codigo">Activar</button></div>';
+    return {t:'Herramientas extra', back:V.id && pres() ? 'ver' : 'inicio', b:b};
+  },
+
+  lista: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    var r = calc(p);
+    var b = '<p>Lo que el cliente tiene que comprar para <b>' + esc(p.cliente.nombre || 'este trabajo') + '</b>, con un ' + S.aj.desperdicio + ' % de margen. Así no sobra ni falta, y no te llama a mitad de obra porque se acabó la pintura.</p>' +
+      '<div class="card"><table class="t">' + r.mat.map(function(x){ return '<tr><td>☐ ' + esc(x.txt) + '</td><td class="n"><b>' + plural(x.cant, x.u) + '</b></td></tr>'; }).join('') + '</table></div>' +
+      check('Mostrar precio aproximado de cada cosa', 'P.listaPrecios', p.listaPrecios) +
+      '<button class="btn verde" data-act="pdf" data-k="lista">📄 Mandar la lista por WhatsApp</button>' +
+      '<button class="btn borde" data-act="waLista">💬 Mandar en texto</button>';
+    return {t:'Lista de material', back:'ver', b:b};
+  },
+
+  sena: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    var s = p.sena, sb = 'P.sena.';
+    var b = '<p>Un acuerdo simple para que el cliente confirme con seña y quede escrito qué incluye el trabajo. Trae el recibo de la seña.</p>' +
+      '<div class="g2">' + campo('Seña (%)', sb + 'pct', s.pct, DEC) + campo('Plazo (días hábiles)', sb + 'plazo', s.plazo, 'inputmode="numeric" placeholder="Ej.: 5"') + '</div>' +
+      campo('Fecha de inicio', sb + 'inicio', s.inicio, 'placeholder="Ej.: lunes 1/12"') +
+      campo('Forma de pago', sb + 'forma', s.forma, '') +
+      '<div class="card" id="vs"></div>' +
+      '<button class="btn verde" data-act="pdf" data-k="sena">📄 Mandar el acuerdo por WhatsApp</button>' +
+      '<p style="font-size:12px;color:var(--suave)">Es un modelo orientativo. Para obras grandes, consultá con un abogado o escribano.</p>';
+    return {t:'Contrato y seña', back:'ver', b:b, vivo:function(){
+      var el = document.getElementById('vs'); if (!el) return;
+      var t = calc(p).total, se = r100(t * num(s.pct) / 100);
+      el.innerHTML = '<div class="fila"><span>Total del trabajo</span><b>' + plata(t) + '</b></div><div class="fila"><span>Seña (' + num(s.pct) + ' %) al confirmar</span><b>' + plata(se) + '</b></div><div class="fila big"><span>Saldo al terminar</span><span>' + plata(t - se) + '</span></div>';
+    }};
+  },
+
+  opc: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    var b = '<p>Le mandás 3 opciones de <b>tu</b> trabajo. El cliente deja de compararte con el más barato y elige entre tus opciones (casi siempre la del medio).</p><div class="opc3">' +
+      OPC.map(function(o){
+        var r = calc(p, o.o);
+        return '<div class="card' + (o.k === 'rec' ? ' rec' : '') + '"><b>' + o.t + (o.k === 'rec' ? ' ⭐' : '') + '</b><p style="font-size:13px;margin:4px 0">' + o.d + '</p><div class="fila big"><span>Total</span><span>' + plata(r.total) + '</span></div></div>';
+      }).join('') + '</div>' +
+      '<button class="btn verde" data-act="pdf" data-k="opc">📄 Mandar las 3 opciones por WhatsApp</button>';
+    return {t:'3 opciones', back:'ver', b:b};
+  },
+
+  copia: function(){
+    var b = '<p>Tus presupuestos y precios se guardan <b>en este celular</b>. Si cambiás de celular o borrás los datos del navegador, se pierden. Guardá una copia cada tanto (por ejemplo, mandátela por WhatsApp a vos mismo).</p>' +
+      '<button class="btn azul" data-act="exportar">💾 Guardar copia</button>' +
+      '<h2>Recuperar una copia</h2><p>Elegí el archivo <b>pinta-y-cobra-copia.json</b>. Reemplaza lo que hay ahora en este celular.</p>' +
+      '<input type="file" id="imp" accept=".json,application/json" class="i">';
+    return {t:'Copia de seguridad', back:'inicio', b:b};
+  },
+
+  ayuda: function(){
+    var b = '<p>Ponela en la pantalla de tu celular y abrila como cualquier app, sin buscar el correo.</p>' +
+      '<div class="card"><b>Android (Chrome)</b><p style="margin-top:6px">1. Tocá los 3 puntitos ⋮ de arriba a la derecha.<br>2. Tocá <b>«Agregar a la pantalla principal»</b> (o «Instalar app»).<br>3. Listo: te queda el ícono.</p></div>' +
+      '<div class="card"><b>iPhone (Safari)</b><p style="margin-top:6px">1. Tocá el botón de compartir (el cuadrado con la flecha).<br>2. Tocá <b>«Agregar a inicio»</b>.<br>3. Listo.</p></div>' +
+      '<div class="info">Guardá también el link del correo: si un día cambiás de celular, entrás con el mismo link y recuperás tu copia.</div>';
+    return {t:'Ponerla en el celular', back:'inicio', b:b};
+  },
+
+  como: function(){
+    var b = '<div class="card"><b>1. Medí y cargá</b><p style="margin-top:6px">Largo, ancho y alto de cada ambiente. La app saca los m² de paredes y de cielorraso (un cuarto de 3×3 tiene 9 m² de piso pero <b>39 m² para pintar</b>).</p></div>' +
+      '<div class="card"><b>2. Marcá cómo está la pared</b><p style="margin-top:6px">Sana, con detalles o enduido completo; fijador, humedad, 3 manos si el color es fuerte. Cada cosa se cobra: nada queda de regalo.</p></div>' +
+      '<div class="card"><b>3. Mandalo por WhatsApp</b><p style="margin-top:6px">PDF con tu nombre, la mano de obra y el material separados, y la validez. El cliente ve todo lo que hacés y no regatea a ciegas.</p></div>' +
+      '<div class="card"><b>4. Mirá cuánto te queda</b><p style="margin-top:6px">Restá ayudante, viajes y herramientas. Si por día te queda menos que tu jornal, la app te dice cuánto subir.</p></div>';
+    return {t:'Cómo se usa', back:'inicio', b:b};
+  }
+};
+
+/* ============ Acciones ============ */
+function setPath(root, path, val){
+  var ps = path.split('.'), o = root;
+  for (var i = 0; i < ps.length - 1; i++) o = o[ps[i]];
+  o[ps[ps.length - 1]] = val;
+}
+function setB(t){
+  var path = t.dataset.b, root = path.charAt(0) === 'P' ? pres() : S;
+  if (!root) return;
+  var val = t.type === 'checkbox' ? t.checked : t.value;
+  if (t.dataset.num !== undefined && t.type !== 'checkbox') val = num(val);
+  setPath(root, path.slice(2), val);
+}
+
+var ACT = {
+  nuevo: function(){ var p = nuevoPres(); S.pres.push(p); guardar(); go('editar', p.id); },
+  listo: function(){ S.listo = true; guardar(); go('inicio'); },
+  seg: function(t){
+    var root = t.dataset.b.charAt(0) === 'P' ? pres() : S;
+    setPath(root, t.dataset.b.slice(2), t.dataset.int !== undefined ? parseInt(t.dataset.v, 10) : t.dataset.v);
+    guardar(); rerender();
+  },
+  addAmb: function(){ var p = pres(); p.amb.push(nuevoAmb(['Dormitorio', 'Cocina', 'Baño', 'Pasillo', 'Comedor'][Math.min(p.amb.length - 1, 4)])); guardar(); rerender(); },
+  dupAmb: function(t){ var p = pres(), a = JSON.parse(JSON.stringify(p.amb[+t.dataset.i])); a.id = uid(); a.nombre += ' 2'; p.amb.splice(+t.dataset.i + 1, 0, a); guardar(); rerender(); },
+  delAmb: function(t){ var p = pres(); if (p.amb.length === 1) { toast('Tiene que quedar al menos un ambiente'); return; } if (!confirm('¿Borrar «' + p.amb[+t.dataset.i].nombre + '»?')) return; p.amb.splice(+t.dataset.i, 1); guardar(); rerender(); },
+  nomAmb: function(t){ var p = pres(), a = p.amb[+t.dataset.i]; a.nombre = t.dataset.n; if (t.dataset.n === 'Frente' || t.dataset.n === 'Patio') a.ext = true; guardar(); rerender(); },
+  addOtro: function(){ var p = pres(); p.ex.otros = p.ex.otros || []; p.ex.otros.push({txt:'', monto:''}); guardar(); rerender(); },
+  delOtro: function(t){ pres().ex.otros.splice(+t.dataset.i, 1); guardar(); rerender(); },
+  subir: function(){
+    var pct = num(document.getElementById('pct').value);
+    if (!pct) { toast('Escribí cuánto % querés subir'); return; }
+    if (!confirm('¿Subir todos tus precios un ' + pct + ' %?')) return;
+    for (var k in S.precios) S.precios[k] = Math.round(S.precios[k] * (1 + pct / 100) / 100) * 100;
+    guardar(); rerender(); toast('Listo: todos tus precios subieron ' + pct + ' %');
+  },
+  ajustar: function(t){ var p = pres(); p.ajuste = String(Math.round(num(p.ajuste) + (100 + num(p.ajuste)) * num(t.dataset.v) / 100)); guardar(); rerender(); toast('Mano de obra ajustada'); },
+  dup: function(){
+    var p = JSON.parse(JSON.stringify(pres())); S.num = (S.num || 0) + 1;
+    p.id = uid(); p.num = S.num; p.ts = Date.now(); p.fecha = hoy(); p.estado = 'borrador'; p.cliente.nombre = (p.cliente.nombre || '') + ' (copia)';
+    S.pres.push(p); guardar(); go('editar', p.id);
+  },
+  del: function(){ var p = pres(); if (!confirm('¿Borrar el presupuesto de ' + (p.cliente.nombre || 'este cliente') + '? No se puede deshacer.')) return; S.pres = S.pres.filter(function(x){ return x.id !== p.id; }); guardar(); go('inicio', null); },
+  tool: function(t){ var k = t.dataset.k; if (S.unlock[k]) go(k); else go('extras'); },
+  codigo: function(){
+    var c = document.getElementById('cod').value;
+    probarCodigo(c).then(function(k){ if (k) { toast('✅ Activada: ' + TOOLS[k].t); rerender(); } else toast('Ese código no es válido. Copialo tal cual del correo.'); });
+  },
+  pdf: function(t){ hacerPDF(t.dataset.k); },
+  wa: function(){ var p = pres(); window.open(waLink(p.cliente.tel, textoPres(p)), '_blank'); if (p.estado === 'borrador') { p.estado = 'enviado'; guardar(); rerender(); } },
+  waLista: function(){ var p = pres(); window.open(waLink(p.cliente.tel, textoLista(p)), '_blank'); },
+  exportar: function(){
+    var blob = new Blob([JSON.stringify(S)], {type:'application/json'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pinta-y-cobra-copia.json'; document.body.appendChild(a); a.click(); a.remove();
+    toast('Copia guardada en Descargas');
+  }
+};
+
+app.addEventListener('click', function(e){
+  var t = e.target.closest('[data-go],[data-act]'); if (!t) return;
+  if (t.dataset.go !== undefined && t.dataset.go !== '') { go(t.dataset.go, t.dataset.id); return; }
+  if (t.dataset.act && ACT[t.dataset.act]) ACT[t.dataset.act](t, e);
+});
+app.addEventListener('input', function(e){
+  var t = e.target; if (!t.dataset.b || t.type === 'checkbox') return;
+  setB(t); guardar(); if (vivoFn) vivoFn();
+});
+app.addEventListener('change', function(e){
+  var t = e.target;
+  if (t.id === 'imp' && t.files && t.files[0]) { importar(t.files[0]); return; }
+  if (t.dataset.b && t.type === 'checkbox') { setB(t); guardar(); rerender(); }
+});
+
+function importar(f){
+  var r = new FileReader();
+  r.onload = function(){
+    try {
+      var s = JSON.parse(r.result);
+      if (!s || !s.v || !s.precios) throw 0;
+      if (!confirm('¿Reemplazar lo de este celular por la copia (' + (s.pres || []).length + ' presupuestos)?')) return;
+      localStorage.setItem(KEY, JSON.stringify(s)); S = cargar(); go('inicio'); toast('Copia recuperada');
+    } catch (e) { toast('Ese archivo no es una copia de Pintá y Cobrá'); }
+  };
+  r.readAsText(f);
+}
+
+function sha(s){
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function(b){
+    return Array.prototype.map.call(new Uint8Array(b), function(x){ return ('0' + x.toString(16)).slice(-2); }).join('');
+  });
+}
+function probarCodigo(c){
+  c = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!c || !window.crypto || !crypto.subtle) return Promise.resolve(null);
+  return sha('pyc:' + c).then(function(h){
+    for (var k in CODIGOS) if (CODIGOS[k] === h) { S.unlock[k] = true; guardar(); return k; }
+    return null;
+  });
+}
+
+/* ============ WhatsApp ============ */
+function waLink(tel, txt){
+  var d = String(tel || '').replace(/\D/g, '');
+  if (d) { if (d.indexOf('54') !== 0) { d = d.replace(/^0/, ''); d = '549' + d; } }
+  return 'https://wa.me/' + d + '?text=' + encodeURIComponent(txt);
+}
+function firma(){ return [S.datos.empresa || S.datos.nombre, S.datos.tel].filter(Boolean).join(' · '); }
+function textoPres(p){
+  var r = calc(p);
+  return 'Hola' + (p.cliente.nombre ? ' ' + p.cliente.nombre : '') + '! Te paso el presupuesto de pintura (N.º ' + pad(p.num) + '):\n\n' +
+    r.det.filter(function(x){ return x.par + x.tec > 0; }).map(function(x){ return '• ' + x.nombre + ': ' + detTxt(x); }).join('\n') +
+    '\n\nMano de obra: ' + plata(r.totMO) + (p.conMat ? '\nMateriales: ' + plata(r.totMat) : '\nMateriales: a cargo tuyo') +
+    '\n*TOTAL: ' + plata(r.total) + '*\n\nVálido por ' + S.aj.validez + ' días.\n' + firma();
+}
+function textoLista(p){
+  var r = calc(p);
+  return 'Hola' + (p.cliente.nombre ? ' ' + p.cliente.nombre : '') + '! Esta es la lista de material para la pintura:\n\n' +
+    r.mat.map(function(x){ return '☐ ' + x.txt + ': ' + plural(x.cant, x.u); }).join('\n') + '\n\nCon esto alcanza justo (ya tiene un margen). ' + firma();
+}
+
+/* ============ PDF ============ */
+function hacerPDF(k){
+  if (!window.jspdf) { toast('Cargando… probá de nuevo en un segundo (necesitás internet)'); return; }
+  var p = pres(), doc;
+  try {
+    doc = k === 'lista' ? pdfLista(p) : k === 'sena' ? pdfSena(p) : k === 'opc' ? pdfOpc(p) : pdfPres(p);
+  } catch (e) { toast('No se pudo armar el PDF'); return; }
+  var nombres = {pres:'Presupuesto', lista:'Lista-de-material', sena:'Acuerdo-y-sena', opc:'Presupuesto-3-opciones'};
+  var nom = nombres[k] + '-' + pad(p.num) + (p.cliente.nombre ? '-' + p.cliente.nombre.replace(/[^\wáéíóúñÁÉÍÓÚÑ]+/g, '-') : '') + '.pdf';
+  var blob = doc.output('blob');
+  var file = null; try { file = new File([blob], nom, {type:'application/pdf'}); } catch (e) {}
+  if (file && navigator.canShare && navigator.canShare({files:[file]})) {
+    navigator.share({files:[file], title:nom}).then(function(){ if (k === 'pres' && p.estado === 'borrador') { p.estado = 'enviado'; guardar(); rerender(); } }).catch(function(){});
+  } else {
+    doc.save(nom); toast('PDF descargado: adjuntalo en el chat del cliente');
+  }
+}
+function pdfBase(titulo, p){
+  var J = window.jspdf.jsPDF, doc = new J({unit:'mm', format:'a4'}), W = 210, M = 15;
+  doc.setFillColor(18, 58, 92); doc.rect(0, 0, W, 30, 'F');
+  doc.setFillColor(255, 201, 40); doc.rect(0, 30, W, 1.6, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+  doc.text(S.datos.empresa || S.datos.nombre || 'Pintura', M, 13);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+  doc.text([S.datos.empresa ? S.datos.nombre : '', S.datos.tel, S.datos.zona].filter(Boolean).join('  ·  '), M, 21);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(titulo, W - M, 13, {align:'right'});
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.text('N.º ' + pad(p.num) + '  ·  ' + p.fecha, W - M, 21, {align:'right'});
+  doc.setTextColor(28, 37, 48);
+  var c = {doc:doc, y:42, M:M, W:W};
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.text('Cliente:', M, c.y);
+  doc.setFont('helvetica', 'normal'); doc.text([p.cliente.nombre || '-', p.cliente.dir].filter(Boolean).join('  ·  '), M + 17, c.y);
+  c.y += 9; return c;
+}
+function seguro(c, h){ if (c.y + h > 282) { c.doc.addPage(); c.y = 20; } }
+function titulo(c, t){
+  seguro(c, 16); var d = c.doc;
+  d.setFillColor(243, 245, 248); d.rect(c.M, c.y - 5, c.W - 2 * c.M, 7.5, 'F');
+  d.setFont('helvetica', 'bold'); d.setFontSize(10.5); d.text(t, c.M + 2, c.y); c.y += 8;
+  d.setFont('helvetica', 'normal'); d.setFontSize(9.5);
+}
+function filas(c, rows, total){
+  var d = c.doc;
+  rows.forEach(function(f){
+    var ls = d.splitTextToSize(f[0], 105); seguro(c, ls.length * 4.6 + 2);
+    d.text(ls, c.M + 2, c.y); if (f[1]) d.text(f[1], c.M + 145, c.y, {align:'right'}); if (f[2]) d.text(f[2], c.W - c.M - 2, c.y, {align:'right'});
+    c.y += ls.length * 4.6 + 1.4;
+  });
+  if (total) {
+    d.setDrawColor(221, 227, 234); d.line(c.M, c.y - 1.5, c.W - c.M, c.y - 1.5);
+    d.setFont('helvetica', 'bold'); d.text(total[0], c.M + 2, c.y + 3.5); d.text(total[1], c.W - c.M - 2, c.y + 3.5, {align:'right'});
+    d.setFont('helvetica', 'normal'); c.y += 11;
+  } else c.y += 4;
+}
+function parrafo(c, t, tam){
+  var d = c.doc; d.setFontSize(tam || 9.5); var ls = d.splitTextToSize(t, c.W - 2 * c.M - 4);
+  seguro(c, ls.length * 4.6 + 2); d.text(ls, c.M + 2, c.y); c.y += ls.length * 4.6 + 2;
+}
+function cajaTotal(c, txt, monto, sub){
+  seguro(c, 22); var d = c.doc;
+  d.setFillColor(18, 58, 92); d.roundedRect(c.M, c.y, c.W - 2 * c.M, sub ? 18 : 14, 3, 3, 'F');
+  d.setTextColor(255, 255, 255); d.setFont('helvetica', 'bold'); d.setFontSize(12); d.text(txt, c.M + 5, c.y + 9);
+  d.setFontSize(16); d.text(monto, c.W - c.M - 5, c.y + 9.5, {align:'right'});
+  if (sub) { d.setFont('helvetica', 'normal'); d.setFontSize(8.5); d.text(sub, c.M + 5, c.y + 14.5); }
+  d.setTextColor(28, 37, 48); d.setFont('helvetica', 'normal'); c.y += (sub ? 18 : 14) + 8;
+}
+function condiciones(c, extra){
+  titulo(c, 'Condiciones');
+  ['Validez: ' + S.aj.validez + ' días desde la fecha del presupuesto.',
+   'Garantía: ' + S.aj.garantia + '.',
+   'Los trabajos que no figuran en este presupuesto (reparaciones, adicionales o cambios que pida el cliente) se presupuestan y se cobran aparte, antes de hacerlos.']
+    .concat(extra || []).forEach(function(t){ parrafo(c, '- ' + t); });
+}
+function pdfPres(p){
+  var r = calc(p), c = pdfBase('PRESUPUESTO', p);
+  titulo(c, 'Trabajo a realizar');
+  filas(c, r.det.filter(function(x){ return x.par + x.tec > 0; }).map(function(x){ return [x.nombre + ': ' + detTxt(x)]; }));
+  titulo(c, 'Mano de obra');
+  filas(c, r.mo.map(function(x){ return [x.txt, x.u ? cantTxt(x.cant, x.u) : '', plata(x.tot)]; }), ['Total mano de obra', plata(r.totMO)]);
+  if (p.conMat) {
+    titulo(c, 'Materiales');
+    filas(c, r.mat.map(function(x){ return [x.txt, plural(x.cant, x.u), plata(x.tot)]; }), ['Total materiales', plata(r.totMat)]);
+  } else { titulo(c, 'Materiales'); parrafo(c, 'Los materiales los compra el cliente (no están incluidos en el total).'); c.y += 2; }
+  cajaTotal(c, 'TOTAL', plata(r.total), p.conMat ? 'Mano de obra + materiales' : 'Solo mano de obra');
+  condiciones(c, p.notas ? ['Notas: ' + p.notas] : []);
+  return c.doc;
+}
+function pdfLista(p){
+  var r = calc(p), c = pdfBase('LISTA DE MATERIALES', p);
+  parrafo(c, 'Para: ' + r.det.filter(function(x){ return x.par + x.tec > 0; }).map(function(x){ return x.nombre; }).join(', ') + '. Comprá exactamente esto: las cantidades ya tienen un ' + S.aj.desperdicio + ' % de margen, así no sobra ni falta.', 10);
+  c.y += 2; titulo(c, 'Para comprar');
+  filas(c, r.mat.map(function(x){ return ['[  ]  ' + x.txt, plural(x.cant, x.u), p.listaPrecios ? 'aprox. ' + plata(x.tot) : '']; }),
+    p.listaPrecios ? ['Total aproximado', plata(r.totMat)] : null);
+  parrafo(c, 'Pedí la misma marca y el mismo color en todas las latas. Si en la pinturería no tienen algo, avisame antes de cambiarlo por otro.');
+  return c.doc;
+}
+function pdfSena(p){
+  var r = calc(p), s = p.sena, se = r100(r.total * num(s.pct) / 100), c = pdfBase('ACUERDO DE TRABAJO', p);
+  titulo(c, 'Trabajo');
+  parrafo(c, 'Según el presupuesto N.º ' + pad(p.num) + ' del ' + p.fecha + ': ' + r.det.filter(function(x){ return x.par + x.tec > 0; }).map(function(x){ return x.nombre + ' (' + detTxt(x) + ')'; }).join('; ') + '.');
+  parrafo(c, p.conMat ? 'Los materiales están incluidos en el precio.' : 'Los materiales los compra el cliente, según la lista que le pasa el pintor.');
+  c.y += 2; titulo(c, 'Precio y pagos');
+  filas(c, [['Precio total del trabajo', '', plata(r.total)], ['Seña al confirmar (' + num(s.pct) + ' %)', '', plata(se)], ['Saldo al terminar el trabajo', '', plata(r.total - se)]]);
+  parrafo(c, 'Forma de pago: ' + (s.forma || '-') + '.');
+  c.y += 2; titulo(c, 'Fechas');
+  parrafo(c, 'Inicio: ' + (s.inicio || 'a coordinar') + '. Plazo estimado: ' + (s.plazo ? s.plazo + ' días hábiles' : 'a coordinar') + ', sujeto a lluvia en trabajos exteriores y a que el lugar esté disponible.');
+  condiciones(c, ['Si el cliente cancela después de confirmar, la seña cubre los materiales comprados y los días reservados.', 'El saldo se paga el día que se termina y se entrega el trabajo.']);
+  c.y += 14; seguro(c, 30); var d = c.doc;
+  d.line(c.M + 5, c.y, c.M + 75, c.y); d.line(c.W - c.M - 75, c.y, c.W - c.M - 5, c.y);
+  d.setFontSize(9); d.text('Firma del cliente', c.M + 40, c.y + 5, {align:'center'}); d.text('Firma del pintor', c.W - c.M - 40, c.y + 5, {align:'center'});
+  c.y += 16;
+  titulo(c, 'Recibo de seña');
+  parrafo(c, 'Recibí de ' + (p.cliente.nombre || '____________________') + ' la suma de ' + plata(se) + ' en concepto de seña por el trabajo de pintura del presupuesto N.º ' + pad(p.num) + '.     Fecha: ____/____/______     Firma: ____________________');
+  return c.doc;
+}
+function pdfOpc(p){
+  var c = pdfBase('PRESUPUESTO EN 3 OPCIONES', p);
+  parrafo(c, 'Te paso tres opciones para el mismo trabajo, para que elijas la que más te conviene.', 10); c.y += 2;
+  OPC.forEach(function(o){
+    var r = calc(p, o.o);
+    titulo(c, 'Opción ' + o.t + (o.k === 'rec' ? '  (la que te recomiendo)' : ''));
+    parrafo(c, o.d);
+    filas(c, [['Mano de obra', '', plata(r.totMO)]].concat(p.conMat ? [['Materiales', '', plata(r.totMat)]] : []), ['Total opción ' + o.t, plata(r.total)]);
+  });
+  condiciones(c, p.conMat ? [] : ['Los materiales los compra el cliente (no están incluidos en los totales).']);
+  return c.doc;
+}
+
+/* ============ Demo (para el quiz y los anuncios) ============ */
+function demoEstado(){
+  var s = estadoNuevo(); s.listo = true;
+  s.datos = {nombre:'Carlos Gómez', empresa:'Pinturas Gómez', tel:'11 2345-6789', zona:'Zona oeste, GBA'};
+  S = s;
+  var p = nuevoPres(); p.cliente = {nombre:'Marta', tel:'', dir:'Ramos Mejía'};
+  p.amb = [nuevoAmb('Living'), nuevoAmb('Dormitorio')];
+  p.amb[0].largo = '4'; p.amb[0].ancho = '3,5'; p.amb[0].enduido = 'parcial';
+  p.amb[1].largo = '3'; p.amb[1].ancho = '3'; p.amb[1].fijador = true;
+  p.ex.muebles = '1'; p.estado = 'enviado';
+  s.pres.push(p);
+  var p2 = nuevoPres(); p2.cliente = {nombre:'Jorge', tel:'', dir:'Haedo'}; p2.ts -= 86400000 * 3; p2.fecha = new Date(p2.ts).toLocaleDateString('es-AR');
+  p2.amb[0].nombre = 'Frente'; p2.amb[0].ext = true; p2.amb[0].modo = 'm2'; p2.amb[0].m2p = '45'; p2.ex.reja = '6'; p2.estado = 'aprobado';
+  s.pres.push(p2);
+  DEMO_ID = p.id;
+  return s;
+}
+
+/* ============ Arranque ============ */
+var c0 = qs.get('c');
+if (c0) {
+  probarCodigo(c0).then(function(k){
+    history.replaceState(null, '', location.pathname);
+    if (k) { toast('✅ Activada: ' + TOOLS[k].t); render(); }
+  });
+}
+if (DEMO) {
+  S.unlock = {lista:true, sena:true, opc:true};
+  if (qs.get('ver')) { V.v = qs.get('ver'); V.id = DEMO_ID; }
+}
+render();
+})();
+</script>
+</body>
+</html>
