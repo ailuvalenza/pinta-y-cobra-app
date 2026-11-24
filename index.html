@@ -111,6 +111,7 @@ table.t tr.tt td{border-bottom:0;font-weight:700;padding-top:9px}
 .opc3 .card.rec{border:2px solid var(--amarillo)}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--texto);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:90%;text-align:center}
 .sep{height:1px;background:var(--borde);margin:16px 0}
+.msg{white-space:pre-wrap;font-size:13.5px;background:#f3f5f8;border-radius:12px;padding:10px 12px;margin:8px 0 10px}
 </style>
 </head>
 <body>
@@ -167,13 +168,40 @@ var AJ0 = {
 var CODIGOS = {
   lista:'ddcd5da9e210a0d8b224b3a25ae30ec9f1f873d4603b86756b5e5b77412c2aee',
   sena:'f85ad735add6d63383890c5165f51c19c78efdba63f060f5cf1c9d12de44b478',
-  opc:'6068d4e596b08d138dd4a79f7888f34c94513230dab28d9e9ffd27c952e6d3a8'
+  opc:'6068d4e596b08d138dd4a79f7888f34c94513230dab28d9e9ffd27c952e6d3a8',
+  bar:'d9a9d6daa2785fec32844be7ea2f59e7a79515879c06b972c83dd20b5e6bbaa0',
+  cli:'2e3deb188168747d9d139b72cc6251bc3e4c14ef0308c666e9e499e7974fa968',
+  adi:'4859f6d3a5f89bb0a9fbd8a150ec9db56e74c445855d605377cef22c27adc934',
+  mod:'4c00409396b7bda518e0ab7144e1dccf26796a16301bb90eab776ac4fdfb7cd2'
 };
 var TOOLS = {
   lista:{e:'🧾', t:'Lista de Material para el Cliente', d:'La lista exacta de latas, enduido y lijas para que el cliente compre sin que sobre ni falte.'},
   sena:{e:'✍️', t:'Contrato y Seña', d:'Acuerdo de trabajo con la seña, el saldo y qué no está incluido, más el recibo de la seña.'},
-  opc:{e:'🎯', t:'Presupuesto en 3 Opciones', d:'Básica, Recomendada y Premium en un solo PDF: el cliente elige entre tus opciones y no entre vos y el más barato.'}
+  opc:{e:'🎯', t:'Presupuesto en 3 Opciones', d:'Básica, Recomendada y Premium en un solo PDF: el cliente elige entre tus opciones y no entre vos y el más barato.'},
+  bar:{e:'🥊', t:'Que No Te Gane el Baratero', d:'Qué contestar cuando te dicen «está caro» u «otro me cobra menos», con los números de ese presupuesto, y a quién escribirle hoy para que no quede en visto.'},
+  cli:{e:'📣', t:'Que Te Busquen a Vos', d:'Publicaciones listas para Marketplace y grupos del barrio, volantes para imprimir, WhatsApp Business armado y mensajes para que tus clientes te recomienden.'},
+  adi:{e:'💵', t:'Nunca Más Trabajo Gratis', d:'Adicionales con el OK del cliente por escrito antes de hacerlos, pagos y saldo al día, acta de entrega en PDF y mensajes para cobrar el saldo.'},
+  mod:{e:'🧱', t:'No Digas Más «Eso No lo Hago»', d:'Durlock, membrana, techos de chapa, hidrolavado y pisos: con sus precios, sus materiales y cómo presupuestarlos, dentro del mismo presupuesto.'}
 };
+var TOOLS_PRES = ['lista', 'sena', 'opc', 'bar', 'adi'];
+var TOOLS_TODAS = ['lista', 'sena', 'opc', 'bar', 'cli', 'adi', 'mod'];
+
+/* ============ Otros trabajos (OTO 4) ============
+   Referencias CABA y GBA, mediados de 2026 (servidos.ar; Easy para membrana): el pintor los cambia por los suyos.
+   [id, nombre, unidad, mano de obra, material por unidad, nota de cómo se presupuesta] */
+var MOD = [
+  ['durTab', 'Tabique de Durlock (placa simple por cara, listo para pintar)', 'm²', 14000, 13000, 'Medí largo × alto del tabique. El material incluye placas, perfiles, tornillos, cinta y masilla. Las aberturas (puerta) llevan refuerzo: sumá 1 m² por cada una.'],
+  ['durCie', 'Cielorraso de Durlock suspendido', 'm²', 17000, 11000, 'Medí largo × ancho del ambiente. Si hay que sacar un cielorraso viejo o pasar luces, va como adicional.'],
+  ['memb', 'Membrana líquida en techo o terraza (3 manos)', 'm²', 10000, 9600, 'Un balde de 20 kg rinde unos 12 m² en 3 manos. Antes: limpiar, sacar lo flojo y sellar fisuras (si hay muchas, cobralo aparte). No se aplica con lluvia ni rocío.'],
+  ['chapa', 'Techo de chapa (antióxido + 2 manos de esmalte)', 'm²', 7000, 3500, 'Medí el largo de la chapa × el ancho del techo (la chapa ondulada tiene un 10 % más de superficie: ya está en el precio). Altura y arnés: sumá días de andamio.'],
+  ['hidro', 'Hidrolavado de frente', 'm²', 2500, 0, 'Se cobra aparte de la pintura aunque la hagas vos después. Frente alto: sumá andamio o silleta.'],
+  ['piso', 'Pulido y plastificado de piso de madera', 'm²', 18000, 8000, 'Si hay que cambiar más del 20 % de las tablas, no conviene pulir: decíselo al cliente antes. Mover muebles va aparte.'],
+  ['pisoCem', 'Pintura de piso de cemento (garage o patio)', 'm²', 5500, 3500, 'Pintura para pisos de alto tránsito, 2 manos. Si el piso está engrasado o con humedad, primero se trata.']
+];
+MOD.forEach(function(m){
+  P['m_' + m[0]] = {g:'mod', n:m[1], u:m[2]}; PR0['m_' + m[0]] = m[3];
+  P['mm_' + m[0]] = {g:'modmat', n:'Material: ' + m[1], u:m[2]}; PR0['mm_' + m[0]] = m[4];
+});
 var ESTADOS = {borrador:'Borrador', enviado:'Enviado', aprobado:'Aprobado', perdido:'Perdido'};
 var NOMBRES_AMB = ['Living','Comedor','Dormitorio','Cocina','Baño','Pasillo','Frente','Patio'];
 
@@ -239,7 +267,83 @@ function nuevoPres(){
   return {id:uid(), num:S.num, ts:Date.now(), fecha:hoy(), cliente:{nombre:'', tel:'', dir:''}, amb:[nuevoAmb('Living')],
     ex:{grieta:'', puerta:'', reja:'', muebles:'', andamio:'', otros:[]}, conMat:true, ajuste:'', notas:'', estado:'borrador',
     queda:{dias:'', ayDias:'', ayJornal:'', viajes:'', viaje:'', herr:'', otros:''},
-    sena:{pct:'50', inicio:'', plazo:'', forma:'Efectivo o transferencia'}};
+    sena:{pct:'50', inicio:'', plazo:'', forma:'Efectivo o transferencia'},
+    mod:{}, adi:[], pagos:[], envTs:0, seg:{}};
+}
+/* Completa lo que les falta a los presupuestos viejos */
+function completar(p){
+  p.mod = p.mod || {}; p.adi = p.adi || []; p.pagos = p.pagos || []; p.seg = p.seg || {};
+  if (!p.envTs && p.estado !== 'borrador') p.envTs = Date.now();
+  return p;
+}
+/* Total con los adicionales aprobados (OTO 3) */
+function totalFinal(p){
+  return calc(p).total + (p.adi || []).reduce(function(s, a){ return s + (a.estado === 'ok' ? num(a.monto) : 0); }, 0);
+}
+function pagado(p){ return (p.pagos || []).reduce(function(s, x){ return s + num(x.monto); }, 0); }
+function diasDesde(ts){ return ts ? Math.floor((Date.now() - ts) / 86400000) : 0; }
+function nomCli(p){ var n = (p.cliente.nombre || '').trim().split(' ')[0]; return n ? ' ' + n : ''; }
+function vence(p){ return new Date(p.ts + num(S.aj.validez) * 86400000).toLocaleDateString('es-AR'); }
+/* Lo que incluye el presupuesto, en palabras del cliente (OTO 1) */
+function incluye(p){
+  var r = calc(p), A = r.A, t = [], manos = 2, end = false, fij = false, hum = 0;
+  r.det.forEach(function(x){ if (x.par + x.tec > 0) { manos = Math.max(manos, x.manos); if (x.end !== 'no') end = true; if (x.fij) fij = true; hum += x.hum; } });
+  var m = A.parInt + A.techo + A.parExt;
+  if (m > 0) t.push(m2(m) + ' de pared y cielorraso medidos (no los m² del piso)');
+  t.push(manos + ' manos de pintura');
+  if (end) t.push('enduido y lijado donde hace falta');
+  if (fij) t.push('fijador sellador antes de pintar');
+  if (hum) t.push('tratamiento de humedad en ' + m2(hum));
+  if (num(p.ex.muebles)) t.push('mover y tapar los muebles');
+  if (num(p.ex.grieta)) t.push('reparación de grietas');
+  t.push(p.conMat ? 'todos los materiales (pintura de primera, enduido, lijas, cinta y nylon)' : 'materiales a cargo tuyo, con la lista exacta para que no sobre ni falte');
+  t.push('limpieza al terminar');
+  t.push('garantía de ' + S.aj.garantia + ', por escrito');
+  return t;
+}
+function textoDescuento(p, n){
+  var r = calc(p), op = [];
+  if (p.conMat && r.totMat > 0) op.push('Si comprás vos los materiales (te paso la lista exacta), te queda en ' + plata(r.totMO) + ' de mano de obra.');
+  op.push('Si me pagás la mitad al confirmar y me dejás elegir la fecha de arranque, te hago un 5 % menos: ' + plata(r100(r.total * 0.95)) + '.');
+  var conM = p.amb.map(function(a){ return {n:a.nombre, t:calc(Object.assign({}, p, {amb:[a], ex:{otros:[]}, mod:{}})).total}; })
+    .filter(function(x){ return x.t > 0; });
+  if (conM.length > 1) {
+    conM.sort(function(a, b){ return b.t - a.t; });
+    op.push('Si hacemos ahora solo ' + conM[0].n.toLowerCase() + ' y el resto más adelante, ahora serían ' + plata(conM[0].t) + '.');
+  }
+  return 'Hola' + n + '! Bajar el precio sin cambiar nada no puedo, porque es lo que me permite hacer el trabajo bien. Pero sí te puedo mejorar el número si me ayudás vos a mí:\n\n' +
+    op.map(function(x, i){ return (i + 1) + ') ' + x; }).join('\n') + '\n\n¿Alguna de estas te sirve?';
+}
+/* Mensajes con botón de WhatsApp y de copiar */
+var MSGS = [];
+function btnMsg(label, txt, tel, segK){
+  MSGS.push({txt:txt, tel:tel || '', seg:segK || ''}); var i = MSGS.length - 1;
+  return '<button class="btn verde chico" data-act="waTxt" data-i="' + i + '">💬 ' + label + '</button>';
+}
+function msg(titulo, txt, tel, segK){
+  MSGS.push({txt:txt, tel:tel || '', seg:segK || ''}); var i = MSGS.length - 1;
+  return '<div class="card"><b>' + titulo + '</b><p class="msg">' + esc(txt) + '</p>' +
+    '<div class="acc"><button class="btn verde chico" data-act="waTxt" data-i="' + i + '">💬 WhatsApp</button><button class="btn borde chico" data-act="copiar" data-i="' + i + '">📋 Copiar</button></div></div>';
+}
+/* Avisos del inicio: seguimiento (OTO 1) y saldos (OTO 3) */
+function avisosHoy(){
+  var h = '';
+  if (S.unlock.bar) {
+    var seg = S.pres.map(completar).filter(function(p){ return p.estado === 'enviado'; }).map(function(p){
+      var d = diasDesde(p.envTs), k = d >= 10 ? 'd10' : d >= 5 ? 'd5' : d >= 2 ? 'd2' : '';
+      return k && !p.seg[k] ? {p:p, d:d, k:k} : null;
+    }).filter(Boolean);
+    if (seg.length) h += '<div class="info"><b>📲 Para escribirle hoy</b>' + seg.map(function(x){
+      return '<button class="pres" style="margin-top:8px" data-go="bar" data-id="' + x.p.id + '"><div><b>' + esc(x.p.cliente.nombre || 'Sin nombre') + '</b><small>Le mandaste el presupuesto hace ' + x.d + ' días</small></div><div class="der"><b>Escribirle ›</b></div></button>';
+    }).join('') + '</div>';
+  }
+  if (S.unlock.adi) {
+    var cob = S.pres.map(completar).filter(function(p){ return p.estado === 'aprobado' && p.pagos.length && totalFinal(p) - pagado(p) > 0; });
+    if (cob.length) h += '<div class="info"><b>💵 Saldos por cobrar</b>' + cob.map(function(p){
+      return '<button class="pres" style="margin-top:8px" data-go="adi" data-id="' + p.id + '"><div><b>' + esc(p.cliente.nombre || 'Sin nombre') + '</b><small>N.º ' + pad(p.num) + '</small></div><div class="der"><b>' + plata(totalFinal(p) - pagado(p)) + '</b></div></button>';
+    }).join('') + '</div>';
+  }
+  return h;
 }
 
 /* Calcula todo. opt (para 3 opciones): {enduido, manos, fm (factor del látex), sinFijador} */
@@ -288,6 +392,12 @@ function calc(p, opt){
   lmo('muebles', num(p.ex.muebles));
   lmo('andamio', num(p.ex.andamio));
   (p.ex.otros || []).forEach(function(o){ var m = num(o.monto); if (m > 0) mo.push({txt:o.txt || 'Otro trabajo', cant:1, u:'', pu:m, tot:m}); });
+  var matMod = [];
+  MOD.forEach(function(m){
+    var c = num((p.mod || {})[m[0]]); if (c <= 0) return;
+    lmo('m_' + m[0], c, m[1]);
+    var pu = pr['mm_' + m[0]]; if (pu > 0) matMod.push({txt:'Material: ' + m[1], cant:c, u:m[2], pu:pu, tot:r100(c * pu)});
+  });
 
   function lm(id, n, f){ if (n > 0) { var pu = pr[id] * (f || 1); mat.push({txt:P[id].n, cant:n, u:P[id].u, pu:pu, tot:r100(n * pu)}); } }
   var d = 1 + aj.desperdicio / 100;
@@ -310,6 +420,7 @@ function calc(p, opt){
     lm('cinta', Math.max(1, A.n));
     if (A.nInt) lm('nylon', A.nInt);
   }
+  mat = mat.concat(matMod);
   var totMO = mo.reduce(function(s, x){ return s + x.tot; }, 0);
   var totMat = mat.reduce(function(s, x){ return s + x.tot; }, 0);
   return {A:A, det:det, mo:mo, mat:mat, totMO:totMO, totMat:totMat, total:totMO + (p.conMat ? totMat : 0)};
@@ -338,12 +449,13 @@ function detTxt(x){
 var app = document.getElementById('app');
 var V = {v:'inicio', id:null};
 var vivoFn = null;
-function pres(){ for (var i = 0; i < S.pres.length; i++) if (S.pres[i].id === V.id) return S.pres[i]; return null; }
+function pres(){ for (var i = 0; i < S.pres.length; i++) if (S.pres[i].id === V.id) return completar(S.pres[i]); return null; }
 function go(v, id){ V.v = v; if (id !== undefined) V.id = id; render(); window.scrollTo(0, 0); }
 function rerender(){ var y = window.scrollY; render(); window.scrollTo(0, y); }
 
 function render(){
   var f = VIEWS[V.v] || VIEWS.inicio;
+  MSGS = [];
   var o = f();
   vivoFn = o.vivo || null;
   app.innerHTML =
@@ -379,6 +491,7 @@ var VIEWS = {
     });
     var b = '<div class="hola">Hola' + (S.datos.nombre ? ', ' + esc(S.datos.nombre.split(' ')[0]) : '') + ' 👋</div>' +
       '<button class="btn" data-act="nuevo">+ Nuevo presupuesto</button>' +
+      avisosHoy() +
       (S.pres.length ? '<div class="stats"><div><small>Presupuestado este mes</small><b>' + plata(mesT) + '</b></div><div><small>Aprobados este mes</small><b>' + apN + ' · ' + plata(apT) + '</b></div></div>' : '') +
       '<h2>Tus presupuestos</h2>' +
       (lista.length ? lista.map(function(p){
@@ -389,6 +502,8 @@ var VIEWS = {
       '<button data-go="precios"><span>💲</span>Mis precios</button>' +
       '<button data-go="datos"><span>👤</span>Mis datos</button>' +
       '<button data-go="extras"><span>🧰</span>Herramientas extra</button>' +
+      (S.unlock.cli ? '<button data-go="cli"><span>📣</span>Conseguir clientes</button>' : '') +
+      (S.unlock.mod ? '<button data-go="mod"><span>🧱</span>Otros trabajos</button>' : '') +
       '<button data-go="copia"><span>💾</span>Copia de seguridad</button>' +
       '<button data-go="ayuda"><span>📲</span>Ponerla en el celular</button>' +
       '<button data-go="como"><span>❓</span>Cómo se usa</button>' +
@@ -422,6 +537,10 @@ var VIEWS = {
       '<div class="g2"><input class="i" id="pct" ' + DEC + ' placeholder="Ej.: 10 (%)"><button class="btn azul chico" data-act="subir">Subir %</button></div></div>' +
       '<h2>Mano de obra</h2>' + filas('mo') +
       '<h2>Materiales</h2>' + filas('mat') +
+      (S.unlock.mod ? '<h2>Otros trabajos</h2>' + MOD.map(function(m){
+        return '<div class="pr-row"><span>' + m[1] + '<small>mano de obra por ' + m[2] + '</small></span><input class="i" data-b="S.precios.m_' + m[0] + '" data-num value="' + miles(S.precios['m_' + m[0]]) + '" ' + DEC + '></div>' +
+          '<div class="pr-row"><span>Material<small>por ' + m[2] + '</small></span><input class="i" data-b="S.precios.mm_' + m[0] + '" data-num value="' + miles(S.precios['mm_' + m[0]]) + '" ' + DEC + '></div>';
+      }).join('') : '') +
       '<h2>Cómo calcula</h2>' +
       campo('Alto de pared de siempre (m)', 'S.aj.alto', String(aj.alto).replace('.', ','), DEC + ' data-num') +
       check('Descontar puertas y ventanas de la pared', 'S.aj.descontar', aj.descontar) +
@@ -478,6 +597,9 @@ var VIEWS = {
           campo('Precio', 'P.ex.otros.' + i + '.monto', o.monto, DEC) + '<button class="ib" style="margin-bottom:10px" data-act="delOtro" data-i="' + i + '">🗑</button></div>';
       }).join('') +
       '<button class="btn borde" data-act="addOtro">+ Otro trabajo con su precio</button>' +
+      (S.unlock.mod ? '<h2>🧱 Otros trabajos (no son pintura)</h2><div class="g2">' +
+        MOD.map(function(m){ return campo(m[1] + ' (' + m[2] + ')', 'P.mod.' + m[0], p.mod[m[0]], DEC + ' placeholder="0"'); }).join('') + '</div>' +
+        '<p style="font-size:12.5px;color:var(--suave);margin-top:-4px">Los precios y cómo medir cada uno están en <b>Inicio → Otros trabajos</b>.</p>' : '') +
       '<h2>Material y precio</h2>' +
       check('Incluir los materiales en el presupuesto', 'P.conMat', p.conMat) +
       '<p style="font-size:12.5px;color:var(--suave);margin-top:-4px">Si el cliente compra la pintura, destildalo: el presupuesto sale solo con la mano de obra.</p>' +
@@ -516,8 +638,9 @@ var VIEWS = {
       '<table class="t">' + r.mat.map(function(x){
         return '<tr><td>' + esc(x.txt) + '<small>' + plural(x.cant, x.u) + '</small></td><td class="n">' + plata(x.tot) + '</td></tr>';
       }).join('') + '<tr class="tt"><td>Total materiales</td><td class="n">' + plata(r.totMat) + '</td></tr></table></div>' +
+      (S.unlock.adi && (p.adi.length || p.pagos.length) ? '<div class="card"><div class="fila"><span>Total con adicionales</span><b>' + plata(totalFinal(p)) + '</b></div><div class="fila big"><span>Saldo a cobrar</span><span>' + plata(totalFinal(p) - pagado(p)) + '</span></div></div>' : '') +
       '<h2>Herramientas extra</h2>' +
-      ['lista', 'sena', 'opc'].map(function(k){
+      TOOLS_PRES.filter(function(k){ return k !== 'bar' && k !== 'adi' || S.unlock[k]; }).map(function(k){
         var T = TOOLS[k], on = S.unlock[k];
         return '<button class="tool" data-act="tool" data-k="' + k + '"><span class="em">' + T.e + '</span><span><b>' + T.t + '</b><small>' + T.d + '</small></span><span class="lk">' + (on ? '›' : '🔒') + '</span></button>';
       }).join('') +
@@ -565,7 +688,7 @@ var VIEWS = {
 
   extras: function(){
     var b = '<p>Estas herramientas se usan desde cada presupuesto. Si compraste alguna, ingresá el código que te llegó por correo.</p>' +
-      ['lista', 'sena', 'opc'].map(function(k){
+      TOOLS_TODAS.filter(function(k){ return ['lista', 'sena', 'opc'].indexOf(k) > -1 || S.unlock[k]; }).map(function(k){
         var T = TOOLS[k];
         return '<div class="tool" style="cursor:default"><span class="em">' + T.e + '</span><span><b>' + T.t + '</b><small>' + T.d + '</small></span><span class="lk">' + (S.unlock[k] ? '✅' : '🔒') + '</span></div>';
       }).join('') +
@@ -610,6 +733,128 @@ var VIEWS = {
       }).join('') + '</div>' +
       '<button class="btn verde" data-act="pdf" data-k="opc">📄 Mandar las 3 opciones por WhatsApp</button>';
     return {t:'3 opciones', back:'ver', b:b};
+  },
+
+  /* ---------- OTO 1: Que No Te Gane el Baratero ---------- */
+  bar: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    if (!S.unlock.bar) return VIEWS.extras();
+    var n = nomCli(p), r = calc(p), tel = p.cliente.tel, d = diasDesde(p.envTs);
+    var b = '<p>Copiá la respuesta que corresponde y mandala tal cual (o cambiale lo que quieras). Ya tiene los números de <b>este</b> presupuesto.</p>' +
+      (r.total <= 0 ? '<div class="aviso">Este presupuesto todavía no tiene medidas: cargalas para que las respuestas salgan con los números.</div>' : '') +
+      '<h2>Cuando te dicen…</h2>' +
+      msg('«Está caro»', 'Hola' + n + '! Te entiendo, nadie quiere pagar de más. Te cuento qué estás pagando con ' + plata(r.total) + ':\n\n' + incluye(p).map(function(x){ return '• ' + x; }).join('\n') +
+        '\n\nNo es un precio tirado al aire: son ' + m2(r.A.parInt + r.A.techo + r.A.parExt) + ' medidos uno por uno. Si querés, lo ajustamos sacando alguna parte, pero no bajo la calidad del trabajo. ¿Qué parte te gustaría revisar?', tel) +
+      msg('«Otro me cobra menos»', 'Está perfecto que compares' + n + '. Para comparar parejo, preguntale al otro si su precio incluye:\n\n' + incluye(p).map(function(x){ return '☐ ' + x; }).join('\n') +
+        '\n\nCasi siempre al más barato le falta algo de esta lista, y después lo cobra aparte o no lo hace. Si te incluye todo esto por menos, avisame y lo charlamos.', tel) +
+      msg('«¿Me hacés un descuento?»', textoDescuento(p, n), tel) +
+      msg('«Lo voy a pensar» o «Te aviso»', 'Dale' + n + ', pensalo tranquilo. Dos cosas para que tengas en cuenta: el precio vale hasta el ' + vence(p) + ' (después la pintura suele aumentar) y tengo lugar para arrancar la semana que viene. ¿Hay algo que te haga dudar y te pueda aclarar ahora? Si es el precio, decímelo sin vueltas y buscamos la forma.', tel) +
+      msg('«Lo dejo para más adelante»', 'Ningún problema' + n + '. ¿Te parece si te escribo en un mes? Así te actualizo el precio y vemos si te cierra. Cualquier cosa, el presupuesto queda guardado y lo retomamos cuando quieras.', tel) +
+      '<h2>Si no te contesta</h2>' +
+      '<p>' + (p.envTs ? 'Lo mandaste hace <b>' + d + (d === 1 ? ' día' : ' días') + '</b>. ' : 'Marcalo como <b>Enviado</b> y la app te avisa en el inicio qué día escribirle. ') + 'Cuando mandás uno, queda tildado.</p>' +
+      msg((p.seg.d2 ? '✅ ' : '') + 'Día 2: para que no quede en visto', 'Hola' + n + '! ¿Pudiste ver el presupuesto de la pintura? Te lo resumo: ' + m2(r.A.parInt + r.A.techo + r.A.parExt) + ' para pintar, ' + plata(r.total) + (p.conMat ? ' con materiales' : '') + '. Si algo no se entiende, decime y te lo explico en dos minutos. 👍', tel, 'd2') +
+      msg((p.seg.d5 ? '✅ ' : '') + 'Día 5: la agenda', 'Hola' + n + ', te escribo porque estoy armando la agenda de las próximas semanas y quería saber si te guardo un lugar para la pintura. ¿Seguís con la idea de hacerlo?', tel, 'd5') +
+      msg((p.seg.d10 ? '✅ ' : '') + 'Día 10: el último', 'Hola' + n + '! Último mensaje así no te lleno el chat 😊. ¿Lo dejamos para más adelante o hay algo del presupuesto que no te cerró? Me sirve mucho saberlo, aunque sea un no.', tel, 'd10') +
+      '<div class="info"><b>3 reglas:</b> nunca bajes el precio sin sacar algo del trabajo; contestá el mismo día; y si te dice que no, preguntá por qué (es lo que más te enseña).</div>';
+    return {t:TOOLS.bar.t, back:'ver', b:b};
+  },
+
+  /* ---------- OTO 2: Que Te Busquen a Vos ---------- */
+  cli: function(){
+    if (!S.unlock.cli) return VIEWS.extras();
+    var D = S.datos, nom = D.nombre || 'tu nombre', zona = D.zona || 'tu zona', tel = D.tel || 'tu WhatsApp', emp = D.empresa ? ' (' + D.empresa + ')' : '';
+    S.plan = S.plan || {};
+    var plan = [['Armar WhatsApp Business con los textos de abajo', 'wab'], ['Mandar el mensaje a 20 conocidos', 'con'], ['Publicar en 5 grupos de Facebook del barrio', 'gru'], ['Publicar en Marketplace', 'mkt'], ['Imprimir 50 volantes y dejarlos en la pinturería, la ferretería y el kiosco', 'vol'], ['Pedir recomendación a tus últimos 3 clientes', 'rec'], ['Subir un antes y después a tu estado', 'est']];
+    var hechos = plan.filter(function(x){ return S.plan[x[1]]; }).length;
+    var aprob = S.pres.filter(function(p){ return p.estado === 'aprobado'; });
+    var viejos = aprob.filter(function(p){ return diasDesde(p.ts) >= 300; });
+    var perd = S.pres.filter(function(p){ return p.estado === 'perdido' && diasDesde(p.ts) >= 30; });
+    var b = '<p>Todo sale con tus datos. Si algo dice «tu zona» o «tu nombre», completalos en <b>Mis datos</b>.</p>' +
+      (!D.nombre || !D.zona || !D.tel ? '<button class="btn borde" data-go="datos">👤 Completar mis datos</button>' : '') +
+      '<h2>Tu plan de 7 días (' + hechos + ' de 7)</h2><div class="card">' + plan.map(function(x, i){ return check('Día ' + (i + 1) + ': ' + x[0], 'S.plan.' + x[1], S.plan[x[1]]); }).join('') + '</div>' +
+      '<h2>Volantes para imprimir</h2><div class="card"><p>4 volantes por hoja A4, con tu nombre, tu zona y tu WhatsApp grande. Imprimilos en cualquier librería o fotocopiadora.</p><button class="btn azul" data-act="volante">📄 Bajar los volantes (PDF)</button></div>' +
+      '<h2>Para publicar</h2>' +
+      msg('Marketplace (título y descripción)', 'Pintor en ' + zona + ' · Presupuesto por escrito en el día\n\nPinto interiores, cielorrasos, frentes, rejas y portones. Trato la humedad y hago enduido. Te mando el presupuesto por WhatsApp con todo lo que incluye, mano de obra y materiales separados, así sabés qué pagás.\n\n' + nom + emp + ' · WhatsApp ' + tel) +
+      msg('Grupo de Facebook del barrio', 'Hola vecinos! 👋 Soy ' + nom + ', pintor de ' + zona + '. Si están pensando en pintar antes de las fiestas o arreglar esa mancha de humedad, les paso el presupuesto por escrito en el día, con los metros medidos y todo lo que incluye. Sin compromiso. WhatsApp ' + tel + '. ¡Gracias!') +
+      msg('Grupo, con foto del antes y el después', 'Les comparto un trabajo que terminamos esta semana en ' + zona + ' (deslicen para ver el antes 👉). Si tienen algo para pintar, les paso presupuesto por escrito sin cargo: ' + tel + '. ' + nom) +
+      msg('Cuando alguien pregunta «¿alguien recomienda pintor?»', 'Hola! Soy ' + nom + ', pintor de ' + zona + '. Te puedo pasar el presupuesto por escrito hoy mismo, con lo que incluye. Te escribo por privado o escribime al ' + tel + ' 🙌') +
+      msg('Estado de WhatsApp: agenda', '📅 Tengo lugar para arrancar la semana que viene.\nInteriores, frentes, rejas y humedad.\nPresupuesto por escrito, con todo lo que incluye.\nEscribime 👉 ' + tel) +
+      msg('Estado de WhatsApp: antes y después', 'Así quedó 👆 (deslizá para ver el antes). ¿Tenés algo para pintar? Te paso el presupuesto en el día.') +
+      msg('Para tus conocidos (lista de difusión)', 'Hola! ¿Cómo andás? Te cuento que estoy tomando trabajos de pintura para las próximas semanas en ' + zona + '. Si vos o alguien que conozcas necesita pintar, pasale mi número: ' + tel + '. Presupuesto por escrito y sin compromiso. ¡Gracias de antemano! 🙏') +
+      msg('Para decir en la pinturería o la ferretería', 'Hola, soy ' + nom + ', pintor de la zona. Les compro acá el material de mis trabajos. ¿Les puedo dejar unos volantes? Si alguien les pide un pintor, me pueden recomendar. Y si quieren, yo les mando a mis clientes a comprar acá.') +
+      '<h2>WhatsApp Business</h2><p>Bajá la app <b>WhatsApp Business</b> (es gratis y usa tu mismo número). Pegá estos textos en Ajustes → Herramientas para la empresa.</p>' +
+      msg('Descripción del perfil', 'Pintor en ' + zona + '. Interiores, cielorrasos, frentes, rejas, humedad y enduido. Presupuesto por escrito en el día, con mano de obra y materiales separados. Garantía de ' + S.aj.garantia + '.') +
+      msg('Mensaje de bienvenida', 'Hola! Gracias por escribir 🖌️ Soy ' + nom + '. Para pasarte un presupuesto justo, mandame: 1) qué querés pintar (ambientes, frente, rejas), 2) fotos de las paredes y 3) tu barrio. Te respondo hoy.') +
+      msg('Mensaje de ausencia', 'Hola! Ahora estoy en una obra y no puedo contestar. Te respondo apenas termine, hoy mismo. Si podés, dejame fotos de lo que querés pintar y tu barrio. 🖌️') +
+      msg('Respuesta rápida para «¿cuánto cobrás el metro?»', 'Depende de cómo esté la pared (si hay que enduir, si tiene humedad, cuántas manos lleva). Para no tirarte un número que después cambie, mandame fotos y medidas, o paso a mirarlo sin cargo, y te mando el presupuesto por escrito con todo lo que incluye.') +
+      '<h2>Tus clientes te consiguen clientes</h2>' +
+      campo('Link para dejar reseña en Google (opcional)', 'S.datos.google', D.google || '', 'placeholder="Lo sacás de tu perfil de Google Maps"') +
+      (aprob.length ? aprob.slice(-5).reverse().map(function(p){
+        var n = nomCli(p);
+        return msg('Pedirle una recomendación a ' + esc(p.cliente.nombre || 'tu cliente'), 'Hola' + n + '! ¿Cómo está quedando la pintura? Te quería pedir un favor: si conocés a alguien que necesite pintar, ¿le pasarías mi número? Para mí es la mejor forma de conseguir trabajo. ' + (D.google ? 'Y si tenés un minuto, me ayuda un montón que dejes una reseña acá: ' + D.google + ' ' : '') + '¡Gracias! 🙏', p.cliente.tel);
+      }).join('') : '<p class="vacio">Cuando marques presupuestos como <b>Aprobado</b>, acá aparecen tus clientes con el mensaje para pedirles una recomendación.</p>') +
+      (viejos.length ? '<h2>Los que pintaste hace un año</h2>' + viejos.map(function(p){
+        return msg('Volver a ofrecerle a ' + esc(p.cliente.nombre || 'tu cliente'), 'Hola' + nomCli(p) + '! Soy ' + nom + ', el pintor. Ya pasó un año desde que pintamos tu casa. ¿Querés que pase a ver cómo quedó y si hay algún retoque o algún ambiente que te falte? Paso sin cargo.', p.cliente.tel);
+      }).join('') : '') +
+      (perd.length ? '<h2>Los que dijeron que no hace más de un mes</h2>' + perd.slice(-5).map(function(p){
+        return msg('Volver a escribirle a ' + esc(p.cliente.nombre || 'tu cliente'), 'Hola' + nomCli(p) + '! ¿Cómo estás? Hace un tiempo te había pasado el presupuesto de pintura. ¿Lo pudiste hacer? Si todavía está pendiente, te lo actualizo y vemos la forma de que te cierre.', p.cliente.tel);
+      }).join('') : '') +
+      '<div class="info">No hay forma honesta de prometer cuántos clientes vas a conseguir: depende de tu zona y de cuántas veces publiques. Lo que sí: el que publica todas las semanas y le pide recomendación a cada cliente, deja de depender de que suene el teléfono.</div>';
+    return {t:TOOLS.cli.t, back:'inicio', b:b};
+  },
+
+  /* ---------- OTO 3: Nunca Más Trabajo Gratis ---------- */
+  adi: function(){
+    var p = pres(); if (!p) return VIEWS.inicio();
+    if (!S.unlock.adi) return VIEWS.extras();
+    var n = nomCli(p), tel = p.cliente.tel, r = calc(p);
+    var tf = totalFinal(p), pg = pagado(p), saldo = tf - pg;
+    var adOk = tf - r.total;
+    var COMUNES = ['Pintar marcos y boquillas', 'Mover y tapar muebles', 'Arreglar revoque flojo', 'Una mano más', 'Pintar zócalos', 'Limpieza final de obra', 'Volver por retoques que pidió el cliente', 'Sacar y volver a poner cortinas o apliques'];
+    var b = '<div class="card"><div class="fila"><span>Presupuesto</span><b>' + plata(r.total) + '</b></div>' +
+      (adOk ? '<div class="fila"><span>+ Adicionales aprobados</span><b>' + plata(adOk) + '</b></div>' : '') +
+      '<div class="fila"><span>Total del trabajo</span><b>' + plata(tf) + '</b></div>' +
+      '<div class="fila"><span>− Ya te pagó</span><b>' + plata(pg) + '</b></div>' +
+      '<div class="fila big"><span>Saldo a cobrar</span><span>' + plata(saldo) + '</span></div></div>' +
+      '<h2>1. Adicionales: primero el sí, después el trabajo</h2>' +
+      '<p>Si en la obra aparece algo que no estaba en el presupuesto, cargalo acá y mandale el pedido de OK <b>antes</b> de hacerlo. Así queda por escrito y se suma solo al saldo.</p>' +
+      p.adi.map(function(a, i){
+        return '<div class="card"><div class="fila" style="border:0"><span><b>' + esc(a.txt || 'Adicional') + '</b></span><b>' + plata(num(a.monto)) + '</b></div>' +
+          seg('P.adi.' + i + '.estado', a.estado, [['pend', 'Esperando OK'], ['ok', 'Aprobado'], ['no', 'No lo quiso']]) +
+          '<div class="acc">' + btnMsg('Pedir el OK por WhatsApp', 'Hola' + n + '! Antes de hacerlo te aviso: «' + (a.txt || 'este trabajo') + '» no estaba en el presupuesto. Tiene un costo de ' + plata(num(a.monto)) + '. ¿Te parece que lo haga? Si me decís que sí, lo sumo al saldo final.', tel) +
+          '<button class="btn rojo chico" data-act="delAdi" data-i="' + i + '">🗑</button></div></div>';
+      }).join('') +
+      '<div class="card"><b>Nuevo adicional</b><div class="chips" style="margin-top:8px">' + COMUNES.map(function(c){ return '<button type="button" data-act="chipAdi" data-n="' + esc(c) + '">' + c + '</button>'; }).join('') + '</div>' +
+      '<label class="f"><span>Qué es</span><input class="i" id="adT" placeholder="Ej.: pintar las rejas del balcón"></label>' +
+      '<div class="g2" style="grid-template-columns:1fr 130px;align-items:end"><label class="f"><span>Precio</span><input class="i" id="adM" ' + DEC + ' placeholder="Ej.: 25.000"></label><button class="btn azul chico" style="margin-bottom:10px" data-act="addAdi">Agregar</button></div></div>' +
+      '<h2>2. Lo que te va pagando</h2>' +
+      (p.pagos.length ? '<div class="card">' + p.pagos.map(function(x, i){ return '<div class="fila"><span>' + esc(x.txt) + '<br><small>' + esc(x.fecha) + '</small></span><span><b>' + plata(num(x.monto)) + '</b> <button class="ib" data-act="delPago" data-i="' + i + '">🗑</button></span></div>'; }).join('') + '</div>' : '') +
+      '<div class="card"><div class="seg" id="pgT">' + ['Seña', 'Pago parcial', 'Saldo'].map(function(t, i){ return '<button type="button" data-act="pgTipo" data-v="' + t + '" class="' + (i === 0 ? 'on' : '') + '">' + t + '</button>'; }).join('') + '</div>' +
+      '<div class="g2" style="grid-template-columns:1fr 130px;align-items:end"><label class="f"><span>Monto que recibiste</span><input class="i" id="pgM" ' + DEC + ' placeholder="' + miles(num(p.sena.pct) ? r100(tf * num(p.sena.pct) / 100) : 0) + '"></label><button class="btn azul chico" style="margin-bottom:10px" data-act="addPago">Anotar</button></div></div>' +
+      '<h2>3. Acta de entrega</h2><div class="card"><p>El día que terminás: un PDF con todo lo que hiciste, los adicionales aprobados, lo que ya te pagó y el saldo, con lugar para la firma de conformidad. Cierra la obra y evita el «ya que estás, pintame esto».</p>' +
+      '<button class="btn verde" data-act="pdf" data-k="acta">📄 Mandar el acta por WhatsApp</button></div>' +
+      '<h2>4. Para cobrar el saldo</h2>' +
+      (saldo <= 0 ? '<div class="ok">✅ Este trabajo está cobrado completo.</div>' :
+        msg('El día que terminás', 'Hola' + n + '! Terminamos 🎉 Te mando el acta de entrega con todo lo que hicimos. Queda un saldo de ' + plata(saldo) + '. ' + (p.sena.forma ? 'Lo podés pagar en ' + p.sena.forma.toLowerCase() + '. ' : '') + 'Cualquier detalle que veas, avisame y lo vemos. ¡Gracias por confiar!', tel) +
+        msg('A los 3 días', 'Hola' + n + ', ¿cómo estás? ¿Qué tal quedó todo? Te recuerdo el saldo de la pintura: ' + plata(saldo) + '. Avisame cuándo te queda cómodo así lo paso a buscar o te paso los datos para transferir.', tel) +
+        msg('A la semana', 'Hola' + n + '. Te escribo de nuevo por el saldo de ' + plata(saldo) + '. Si se te complica pagarlo de una vez, decime y lo hacemos en 2 pagos, sin problema. Lo que necesito es que fijemos una fecha.', tel) +
+        msg('A las 2 semanas (firme y con respeto)', 'Hola' + n + '. Pasaron dos semanas desde que entregamos el trabajo y el saldo de ' + plata(saldo) + ' sigue pendiente. Es mi sueldo y lo necesito para los materiales de la próxima obra. ¿Me confirmás hoy qué día lo vas a pagar? Te adjunto de nuevo el acta firmada.', tel)) +
+      '<div class="info"><b>La regla:</b> ningún adicional se empieza sin un «sí» por escrito, y el saldo se habla el día de la entrega, no una semana después.</div>';
+    return {t:TOOLS.adi.t, back:'ver', b:b};
+  },
+
+  /* ---------- OTO 4: No Digas Más «Eso No lo Hago» ---------- */
+  mod: function(){
+    if (!S.unlock.mod) return VIEWS.extras();
+    var b = '<p>Ahora podés presupuestar estos trabajos en el mismo presupuesto de la pintura. Entrá a un presupuesto → <b>Editar</b> → <b>Otros trabajos</b> y poné los m².</p>' +
+      '<div class="info">Son <b>precios de arranque</b> (referencias de CABA y GBA, mediados de 2026). Cambialos por los tuyos acá abajo: el de mano de obra y el del material por m².</div>' +
+      MOD.map(function(m){
+        return '<div class="card"><b>' + m[1] + '</b><p style="font-size:13px;margin:6px 0 8px">' + m[5] + '</p>' +
+          '<div class="g2">' + campo('Mano de obra por ' + m[2], 'S.precios.m_' + m[0], miles(S.precios['m_' + m[0]]), DEC + ' data-num') +
+          campo('Material por ' + m[2], 'S.precios.mm_' + m[0], miles(S.precios['mm_' + m[0]]), DEC + ' data-num') + '</div></div>';
+      }).join('') +
+      '<div class="info"><b>Antes de decir que sí:</b> si nunca lo hiciste, hacé el primero en tu casa o en la de un conocido. Y si el trabajo te queda grande (estructura, gas, electricidad), recomendá a alguien: también suma clientes.</div>';
+    return {t:TOOLS.mod.t, back:'inicio', b:b};
   },
 
   copia: function(){
@@ -685,6 +930,39 @@ var ACT = {
     probarCodigo(c).then(function(k){ if (k) { toast('✅ Activada: ' + TOOLS[k].t); rerender(); } else toast('Ese código no es válido. Copialo tal cual del correo.'); });
   },
   pdf: function(t){ hacerPDF(t.dataset.k); },
+  waTxt: function(t){
+    var m = MSGS[+t.dataset.i]; if (!m) return;
+    window.open(waLink(m.tel, m.txt), '_blank');
+    if (m.seg) { var p = pres(); if (p) { p.seg[m.seg] = true; guardar(); rerender(); } }
+  },
+  copiar: function(t){
+    var m = MSGS[+t.dataset.i]; if (!m) return;
+    var ok = function(){ toast('Copiado: pegalo donde quieras'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(m.txt).then(ok, function(){ copiaVieja(m.txt); ok(); });
+    else { copiaVieja(m.txt); ok(); }
+  },
+  chipAdi: function(t){ var el = document.getElementById('adT'); if (el) { el.value = t.dataset.n; document.getElementById('adM').focus(); } },
+  addAdi: function(){
+    var tx = document.getElementById('adT').value.trim(), mo = num(document.getElementById('adM').value);
+    if (!tx || !mo) { toast('Escribí qué es y cuánto cuesta'); return; }
+    pres().adi.push({txt:tx, monto:mo, estado:'pend', ts:Date.now()}); guardar(); rerender(); toast('Agregado: ahora pedile el OK por WhatsApp');
+  },
+  delAdi: function(t){ var p = pres(); if (!confirm('¿Borrar este adicional?')) return; p.adi.splice(+t.dataset.i, 1); guardar(); rerender(); },
+  pgTipo: function(t){ var s = t.parentNode.children; for (var i = 0; i < s.length; i++) s[i].className = s[i] === t ? 'on' : ''; },
+  addPago: function(){
+    var mo = num(document.getElementById('pgM').value); if (!mo) { toast('Escribí el monto que recibiste'); return; }
+    var on = document.querySelector('#pgT .on');
+    pres().pagos.push({monto:mo, txt:on ? on.dataset.v : 'Pago', fecha:hoy()}); guardar(); rerender(); toast('Pago anotado');
+  },
+  delPago: function(t){ var p = pres(); if (!confirm('¿Borrar este pago?')) return; p.pagos.splice(+t.dataset.i, 1); guardar(); rerender(); },
+  volante: function(){
+    if (!window.jspdf) { toast('Cargando… probá de nuevo en un segundo (necesitás internet)'); return; }
+    var doc; try { doc = pdfVolante(); } catch (e) { toast('No se pudo armar el PDF'); return; }
+    var nom = 'Volantes-pintor.pdf', blob = doc.output('blob'), file = null;
+    try { file = new File([blob], nom, {type:'application/pdf'}); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({files:[file]})) navigator.share({files:[file], title:nom}).catch(function(){});
+    else { doc.save(nom); toast('Volantes descargados'); }
+  },
   wa: function(){ var p = pres(); window.open(waLink(p.cliente.tel, textoPres(p)), '_blank'); if (p.estado === 'borrador') { p.estado = 'enviado'; guardar(); rerender(); } },
   waLista: function(){ var p = pres(); window.open(waLink(p.cliente.tel, textoLista(p)), '_blank'); },
   exportar: function(){
@@ -727,6 +1005,10 @@ function sha(s){
     return Array.prototype.map.call(new Uint8Array(b), function(x){ return ('0' + x.toString(16)).slice(-2); }).join('');
   });
 }
+function copiaVieja(t){
+  var a = document.createElement('textarea'); a.value = t; a.style.position = 'fixed'; a.style.opacity = '0';
+  document.body.appendChild(a); a.select(); try { document.execCommand('copy'); } catch (e) {} a.remove();
+}
 function probarCodigo(c){
   c = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (!c || !window.crypto || !crypto.subtle) return Promise.resolve(null);
@@ -761,9 +1043,9 @@ function hacerPDF(k){
   if (!window.jspdf) { toast('Cargando… probá de nuevo en un segundo (necesitás internet)'); return; }
   var p = pres(), doc;
   try {
-    doc = k === 'lista' ? pdfLista(p) : k === 'sena' ? pdfSena(p) : k === 'opc' ? pdfOpc(p) : pdfPres(p);
+    doc = k === 'lista' ? pdfLista(p) : k === 'sena' ? pdfSena(p) : k === 'opc' ? pdfOpc(p) : k === 'acta' ? pdfActa(p) : pdfPres(p);
   } catch (e) { toast('No se pudo armar el PDF'); return; }
-  var nombres = {pres:'Presupuesto', lista:'Lista-de-material', sena:'Acuerdo-y-sena', opc:'Presupuesto-3-opciones'};
+  var nombres = {pres:'Presupuesto', lista:'Lista-de-material', sena:'Acuerdo-y-sena', opc:'Presupuesto-3-opciones', acta:'Acta-de-entrega'};
   var nom = nombres[k] + '-' + pad(p.num) + (p.cliente.nombre ? '-' + p.cliente.nombre.replace(/[^\wáéíóúñÁÉÍÓÚÑ]+/g, '-') : '') + '.pdf';
   var blob = doc.output('blob');
   var file = null; try { file = new File([blob], nom, {type:'application/pdf'}); } catch (e) {}
@@ -883,6 +1165,48 @@ function pdfOpc(p){
   return c.doc;
 }
 
+function pdfActa(p){
+  var r = calc(p), c = pdfBase('ACTA DE ENTREGA', p), tf = totalFinal(p), pg = pagado(p);
+  var ok = p.adi.filter(function(a){ return a.estado === 'ok'; });
+  titulo(c, 'Trabajo realizado');
+  filas(c, r.det.filter(function(x){ return x.par + x.tec > 0; }).map(function(x){ return [x.nombre + ': ' + detTxt(x)]; })
+    .concat(r.mo.filter(function(x){ return /^Material|^Pintura|^Frente|^Mano extra/.test(x.txt) === false; }).map(function(x){ return [x.txt + (x.u ? ' (' + cantTxt(x.cant, x.u) + ')' : '')]; })));
+  if (ok.length) { titulo(c, 'Adicionales aprobados por el cliente'); filas(c, ok.map(function(a){ return [a.txt, '', plata(num(a.monto))]; }), ['Total adicionales', plata(tf - r.total)]); }
+  titulo(c, 'Cuenta');
+  filas(c, [['Presupuesto N.º ' + pad(p.num), '', plata(r.total)]].concat(ok.length ? [['Adicionales aprobados', '', plata(tf - r.total)]] : [])
+    .concat([['Total del trabajo', '', plata(tf)]]).concat(p.pagos.map(function(x){ return ['Pagado: ' + x.txt + ' (' + x.fecha + ')', '', '- ' + plata(num(x.monto))]; })));
+  cajaTotal(c, tf - pg > 0 ? 'SALDO A PAGAR' : 'TRABAJO PAGADO', plata(Math.max(0, tf - pg)), tf - pg > 0 ? 'Forma de pago: ' + (p.sena.forma || 'a convenir') : '');
+  titulo(c, 'Conformidad');
+  parrafo(c, 'El cliente recibe el trabajo terminado y conforme, el día ' + hoy() + '. Garantía: ' + S.aj.garantia + ', desde esta fecha. Los trabajos nuevos o los cambios que se pidan después de esta entrega se presupuestan aparte.');
+  parrafo(c, 'Observaciones del cliente: ________________________________________________________________');
+  c.y += 16; seguro(c, 20); var d = c.doc;
+  d.line(c.M + 5, c.y, c.M + 75, c.y); d.line(c.W - c.M - 75, c.y, c.W - c.M - 5, c.y);
+  d.setFontSize(9); d.text('Firma del cliente', c.M + 40, c.y + 5, {align:'center'}); d.text('Firma del pintor', c.W - c.M - 40, c.y + 5, {align:'center'});
+  return c.doc;
+}
+function pdfVolante(){
+  var J = window.jspdf.jsPDF, d = new J({unit:'mm', format:'a4'}), D = S.datos;
+  var nom = D.empresa || D.nombre || 'Pintor', sub = D.empresa ? D.nombre : '', zona = D.zona || '', tel = D.tel || '';
+  [[0, 0], [105, 0], [0, 148.5], [105, 148.5]].forEach(function(o){
+    var x = o[0], y = o[1], cx = x + 52.5;
+    d.setFillColor(18, 58, 92); d.rect(x, y, 105, 40, 'F');
+    d.setFillColor(255, 201, 40); d.rect(x, y + 40, 105, 2, 'F');
+    d.setTextColor(255, 201, 40); d.setFont('helvetica', 'bold'); d.setFontSize(26); d.text('PINTOR', cx, y + 17, {align:'center'});
+    d.setTextColor(255, 255, 255); d.setFontSize(13); d.text(d.splitTextToSize(nom, 90), cx, y + 27, {align:'center'});
+    d.setFont('helvetica', 'normal'); d.setFontSize(9.5); if (sub || zona) d.text([sub, zona].filter(Boolean).join(' · '), cx, y + 35, {align:'center'});
+    d.setTextColor(28, 37, 48); d.setFont('helvetica', 'bold'); d.setFontSize(11);
+    ['Interiores y cielorrasos', 'Frentes y medianeras', 'Humedad, grietas y enduido', 'Rejas, portones y puertas'].forEach(function(t, i){ d.text('+  ' + t, x + 14, y + 54 + i * 9); });
+    d.setFont('helvetica', 'normal'); d.setFontSize(10.5);
+    d.text(d.splitTextToSize('Presupuesto por escrito en el día, con todo lo que incluye. Sin compromiso.', 85), cx, y + 96, {align:'center'});
+    d.setFillColor(37, 211, 102); d.roundedRect(x + 8, y + 110, 89, 22, 4, 4, 'F');
+    d.setTextColor(255, 255, 255); d.setFont('helvetica', 'bold'); d.setFontSize(10); d.text('WhatsApp', cx, y + 118, {align:'center'});
+    d.setFontSize(18); d.text(tel || '__________', cx, y + 127.5, {align:'center'});
+    d.setTextColor(28, 37, 48);
+  });
+  d.setDrawColor(150); d.setLineDashPattern([2, 2], 0); d.line(105, 0, 105, 297); d.line(0, 148.5, 210, 148.5);
+  return d;
+}
+
 /* ============ Demo (para el quiz y los anuncios) ============ */
 function demoEstado(){
   var s = estadoNuevo(); s.listo = true;
@@ -892,10 +1216,13 @@ function demoEstado(){
   p.amb = [nuevoAmb('Living'), nuevoAmb('Dormitorio')];
   p.amb[0].largo = '4'; p.amb[0].ancho = '3,5'; p.amb[0].enduido = 'parcial';
   p.amb[1].largo = '3'; p.amb[1].ancho = '3'; p.amb[1].fijador = true;
-  p.ex.muebles = '1'; p.estado = 'enviado';
+  p.ex.muebles = '1'; p.estado = 'enviado'; p.envTs = Date.now() - 86400000 * 2;
   s.pres.push(p);
   var p2 = nuevoPres(); p2.cliente = {nombre:'Jorge', tel:'', dir:'Haedo'}; p2.ts -= 86400000 * 3; p2.fecha = new Date(p2.ts).toLocaleDateString('es-AR');
   p2.amb[0].nombre = 'Frente'; p2.amb[0].ext = true; p2.amb[0].modo = 'm2'; p2.amb[0].m2p = '45'; p2.ex.reja = '6'; p2.estado = 'aprobado';
+  p2.mod = {hidro:'45', memb:'20'};
+  p2.adi = [{txt:'Pintar marcos y boquillas', monto:35000, estado:'ok', ts:Date.now()}, {txt:'Arreglar revoque flojo', monto:28000, estado:'pend', ts:Date.now()}];
+  p2.pagos = [{monto:400000, txt:'Seña', fecha:p2.fecha}];
   s.pres.push(p2);
   DEMO_ID = p.id;
   return s;
@@ -911,7 +1238,9 @@ if (c0) {
 }
 if (DEMO) {
   S.unlock = {lista:true, sena:true, opc:true};
-  if (qs.get('ver')) { V.v = qs.get('ver'); V.id = DEMO_ID; }
+  /* &otos=1 muestra también las 4 herramientas de después de la compra (para las capturas de los OTOs) */
+  if (qs.get('otos') === '1') { S.unlock.bar = S.unlock.cli = S.unlock.adi = S.unlock.mod = true; }
+  if (qs.get('ver')) { V.v = qs.get('ver'); V.id = qs.get('p') === '2' ? S.pres[1].id : DEMO_ID; }
 }
 render();
 })();
