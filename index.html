@@ -159,7 +159,7 @@ BASE.forEach(function(b){ P[b[0]] = {g:b[1], n:b[2], u:b[3]}; PR0[b[0]] = b[4]; 
 
 var AJ0 = {
   alto:2.5, descontar:false, puertaM2:1.8, ventanaM2:1.5,
-  rindeLatex:10, rindeExt:8, rindeEnduido:25, rindeFijador:40, rindeEsmalte:8, desperdicio:10,
+  rindeLatex:10, rindeExt:8, rindeEnduido:25, rindeFijador:100, rindeEsmalte:8, desperdicio:10,
   validez:15, garantia:'6 meses sobre la mano de obra', jornal:60000
 };
 
@@ -188,6 +188,7 @@ function cargar(){
     if (s && s.v) {
       for (var k in PR0) if (!(k in s.precios)) s.precios[k] = PR0[k];
       for (var j in AJ0) if (!(j in s.aj)) s.aj[j] = AJ0[j];
+      if (s.aj.rindeFijador === 40) s.aj.rindeFijador = AJ0.rindeFijador;
       s.unlock = s.unlock || {}; s.pres = s.pres || []; s.datos = s.datos || {};
       return s;
     }
@@ -429,7 +430,7 @@ var VIEWS = {
       campo('Látex: m² por litro (1 mano)', 'S.aj.rindeLatex', aj.rindeLatex, DEC + ' data-num') +
       campo('Látex exterior: m² por litro', 'S.aj.rindeExt', aj.rindeExt, DEC + ' data-num') +
       campo('Enduido: m² por balde', 'S.aj.rindeEnduido', aj.rindeEnduido, DEC + ' data-num') +
-      campo('Fijador: m² por lata', 'S.aj.rindeFijador', aj.rindeFijador, DEC + ' data-num') +
+      campo('Fijador: m² por lata de 4 L (concentrado)', 'S.aj.rindeFijador', aj.rindeFijador, DEC + ' data-num') +
       campo('Esmalte: m² por litro', 'S.aj.rindeEsmalte', aj.rindeEsmalte, DEC + ' data-num') +
       campo('Margen de material (%)', 'S.aj.desperdicio', aj.desperdicio, DEC + ' data-num') +
       '</div>' +
