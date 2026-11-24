@@ -821,7 +821,7 @@ var VIEWS = {
       p.adi.map(function(a, i){
         return '<div class="card"><div class="fila" style="border:0"><span><b>' + esc(a.txt || 'Adicional') + '</b></span><b>' + plata(num(a.monto)) + '</b></div>' +
           seg('P.adi.' + i + '.estado', a.estado, [['pend', 'Esperando OK'], ['ok', 'Aprobado'], ['no', 'No lo quiso']]) +
-          '<div class="acc">' + btnMsg('Pedir el OK por WhatsApp', 'Hola' + n + '! Antes de hacerlo te aviso: «' + (a.txt || 'este trabajo') + '» no estaba en el presupuesto. Tiene un costo de ' + plata(num(a.monto)) + '. ¿Te parece que lo haga? Si me decís que sí, lo sumo al saldo final.', tel) +
+          '<div class="acc" style="grid-template-columns:1fr 56px">' + btnMsg('Pedir el OK por WhatsApp', 'Hola' + n + '! Antes de hacerlo te aviso: «' + (a.txt || 'este trabajo') + '» no estaba en el presupuesto. Tiene un costo de ' + plata(num(a.monto)) + '. ¿Te parece que lo haga? Si me decís que sí, lo sumo al saldo final.', tel) +
           '<button class="btn rojo chico" data-act="delAdi" data-i="' + i + '">🗑</button></div></div>';
       }).join('') +
       '<div class="card"><b>Nuevo adicional</b><div class="chips" style="margin-top:8px">' + COMUNES.map(function(c){ return '<button type="button" data-act="chipAdi" data-n="' + esc(c) + '">' + c + '</button>'; }).join('') + '</div>' +
